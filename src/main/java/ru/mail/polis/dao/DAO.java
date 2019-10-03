@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 (c) Odnoklassniki
+ * Copyright 2018 (c) Vadim Tsesko <incubos@yandex.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@ package ru.mail.polis.dao;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.mail.polis.Record;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import ru.mail.polis.Record;
 
 /**
  * Storage interface.
@@ -61,7 +63,7 @@ public interface DAO extends Closeable {
             return Iters.empty();
         }
 
-        final Record bound = Record.of(to, ByteBuffer.allocate(0));
+        final Record bound = new Record(to, ByteBuffer.allocate(0));
         return Iters.until(iterator(from), bound);
     }
 
@@ -86,11 +88,21 @@ public interface DAO extends Closeable {
     }
 
     /**
+     * Get  outputStream by given key.
+     */
+    void getStream(@NotNull ByteBuffer key,
+                   @NotNull OutputStream outputStream) throws IOException, NoSuchElementException;
+
+    /**
      * Inserts or updates value by given key.
      */
     void upsert(
             @NotNull ByteBuffer key,
             @NotNull ByteBuffer value) throws IOException;
+
+    void upsertStream(
+            @NotNull ByteBuffer key,
+            @NotNull InputStream value) throws IOException;
 
     /**
      * Removes value by given key.

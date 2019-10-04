@@ -31,7 +31,7 @@ public class Record implements Comparable<Record> {
     private final ByteBuffer key;
     private final ByteBuffer value;
 
-    public Record(
+    private Record(
             @NotNull final ByteBuffer key,
             @NotNull final ByteBuffer value) {
         this.key = key;

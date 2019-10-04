@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 (c) Vadim Tsesko <incubos@yandex.com>
+ * Copyright 2019 (c) Odnoklassniki
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public final class DAOFactory {
             throw new IllegalArgumentException("Path is not a directory: " + data);
         }
 
+       // throw new IllegalStateException("Not implemented yet");
         return new LSMDao(data, MAX_HEAP / 64);
     }
 }

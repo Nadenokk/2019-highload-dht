@@ -19,9 +19,9 @@ package ru.mail.polis.service;
 import java.io.IOException;
 
 import org.jetbrains.annotations.NotNull;
+import ru.mail.polis.service.httprest.HttpRestDemon;
 
 import ru.mail.polis.dao.DAO;
-import ru.mail.polis.service.serviced.ServiceRestHttp;
 
 /**
  * Constructs {@link Service} instances.
@@ -54,7 +54,6 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        //throw new IllegalStateException();
-        return new ServiceRestHttp(port, dao);
+        return new HttpRestDemon(port, dao);
     }
 }

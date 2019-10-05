@@ -69,9 +69,6 @@ public final class HttpRestDemon extends HttpServer implements Service{
     }
 
     private static HttpServerConfig createService(final int port) {
-        //  if(port <= 1024 || port >= 65536) {
-        //      throw new IllegalArgumentException("Invalid port");
-        // }
         var acceptorConfig = new AcceptorConfig();
         HttpServerConfig config = new HttpServerConfig();
         acceptorConfig.port = port;

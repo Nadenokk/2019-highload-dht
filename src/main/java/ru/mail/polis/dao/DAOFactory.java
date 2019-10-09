@@ -16,11 +16,11 @@
 
 package ru.mail.polis.dao;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.IOException;
 import ru.mail.polis.dao.persistence.LSMDao;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Custom {@link DAO} factory.
@@ -28,7 +28,7 @@ import ru.mail.polis.dao.persistence.LSMDao;
  * @author Vadim Tsesko
  */
 public final class DAOFactory {
-    static final long MAX_HEAP = 128 * 1024 * 1024;
+    static final long MAX_HEAP = 256 * 1024 * 1024;
 
     private DAOFactory() {
         // Not instantiatable

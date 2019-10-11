@@ -20,12 +20,15 @@ public final class FileTable implements Table {
     private final ByteBuffer cells;
     private final int sizeFileInByte;
     private final Path path;
+    private final long currentGeneration;
 
-    FileTable(final File file) throws IOException {
+    FileTable(final File file, final long currentGeneration) throws IOException {
         final int sizeFile = (int) file.length();
         this.path = file.toPath();
         this.sizeFileInByte = sizeFile;
         final ByteBuffer mapped;
+
+
 
         try (FileChannel fc = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
             assert sizeFile <= Integer.MAX_VALUE;
@@ -45,6 +48,7 @@ public final class FileTable implements Table {
         final ByteBuffer cellBuffer = mapped.duplicate();
         cellBuffer.limit(offsetBuffer.position());
         this.cells = cellBuffer.slice();
+        this.currentGeneration = currentGeneration;
     }
 
     @Override
@@ -124,7 +128,7 @@ public final class FileTable implements Table {
         final long timestamp = cells.getLong(offset);
         offset += Long.BYTES;
         if (timestamp < 0) {
-            return new Cell(key.slice(), new Value(-timestamp, null));
+            return new Cell(key.slice(), new Value(-timestamp, null), currentGeneration);
         } else {
             final int valueSize = cells.getInt(offset);
             offset += Integer.BYTES;
@@ -133,7 +137,7 @@ public final class FileTable implements Table {
             value.limit(value.position() + valueSize)
                     .position(offset)
                     .limit(offset + valueSize);
-            return new Cell(key.slice(), new Value(timestamp, value.slice()));
+            return new Cell(key.slice(), new Value(timestamp, value.slice()), currentGeneration);
         }
     }
 
@@ -200,4 +204,8 @@ public final class FileTable implements Table {
     public Path getPath() {
         return path;
     }
+
+    @Override
+    public long generation() { return currentGeneration; }
+
 }

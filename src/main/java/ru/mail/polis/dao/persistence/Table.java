@@ -16,4 +16,6 @@ public interface Table {
 
     void remove(@NotNull ByteBuffer key) throws IOException;
 
+    long generation();
+
 }

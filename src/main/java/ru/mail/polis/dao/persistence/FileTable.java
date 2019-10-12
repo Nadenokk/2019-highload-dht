@@ -207,5 +207,4 @@ public final class FileTable implements Table {
 
     @Override
     public long generation() { return currentGeneration; }
-
 }

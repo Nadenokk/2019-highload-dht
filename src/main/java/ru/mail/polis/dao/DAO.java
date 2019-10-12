@@ -87,20 +87,12 @@ public interface DAO extends Closeable {
         }
     }
 
-    void getStream(@NotNull ByteBuffer key,
-                   @NotNull OutputStream outputStream) throws IOException, NoSuchElementException;
-
     /**
      * Inserts or updates value by given key.
      */
     void upsert(
             @NotNull ByteBuffer key,
             @NotNull ByteBuffer value) throws IOException;
-
-    void upsertStream(
-            @NotNull ByteBuffer key,
-            @NotNull InputStream value) throws IOException;
-
 
     /**
      * Removes value by given key.

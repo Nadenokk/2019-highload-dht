@@ -15,6 +15,7 @@
 !.codeclimate.yml
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
+!wrk+async/*
 
 # ...even if they are in subdirectories
 !*/

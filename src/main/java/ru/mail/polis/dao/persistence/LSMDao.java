@@ -9,19 +9,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.io.InputStream;
 
 public final class LSMDao implements DAO {
 
@@ -33,9 +29,9 @@ public final class LSMDao implements DAO {
     public static final ByteBuffer nullBuffer = ByteBuffer.allocate(0);
     private final File base;
     private Collection<FileTable> fileTables;
-    private MemTablesPool memTable;
-    private long generation;
-    private final long flushThreshold;
+    private final MemTablesPool memTable;
+    private final long generation;
+    final long flushThreshold;
     private final Thread flushedThread;
 
     /**
@@ -50,6 +46,7 @@ public final class LSMDao implements DAO {
         this.base = base;
         this.flushThreshold = flushThreshold;
         this.fileTables = new ArrayList<>();
+
         final AtomicLong maxGeneration = new AtomicLong();
 
         try (Stream<Path> pStream = Files.walk(base.toPath(), 1)
@@ -68,7 +65,7 @@ public final class LSMDao implements DAO {
             });
         }
         maxGeneration.set(maxGeneration.get() + 1);
-        this.generation= maxGeneration.get();
+        this.generation = maxGeneration.get();
         this.memTable = new MemTablesPool(maxGeneration.get(),flushThreshold);
         flushedThread = new Thread(new FlusherTask());
         flushedThread.start();
@@ -85,47 +82,12 @@ public final class LSMDao implements DAO {
         memTable.upsert(key, value);
     }
 
-    @Override
-    public void upsertStream(@NotNull final ByteBuffer key, @NotNull final InputStream stream) throws IOException {
-        int read =0;
-        final ByteBuffer value = ByteBuffer.allocateDirect(stream.available());
-        value.clear();
-        int curent = stream.available();
-        final byte[] bytes = new byte[1024];
-        while ((read = stream.read(bytes)) != -1) {
-            final int shiftBuf = Math.min(curent,bytes.length);
-            for (int i =0; i<shiftBuf;i++) {
-                value.put(bytes[i]);
-            }
-            curent =curent - shiftBuf;
-        }
-        value.flip();
-        memTable.upsert(key, value);
-    }
-
-    @Override
-    public void getStream(@NotNull final ByteBuffer key,
-                          final OutputStream outputStream) throws IOException, NoSuchElementException {
-        final Iterator<Record> iter = iterator(key);
-        if (!iter.hasNext()) {
-            throw new NoSuchElementException("Not found");
-        }
-        final Record next = iter.next();
-        if (next.getKey().equals(key)) {
-
-            final WritableByteChannel channel = Channels.newChannel(outputStream);
-            channel.write(next.getValue());
-            channel.close();
-
-        } else {
-            throw new NoSuchElementException("Not found");
-        }
-    }
-
-    private void flush(final long currentGeneration,final boolean isCompactFlush,@NotNull final Iterator<Cell> iterator) throws IOException {
+    private void flush(final long currentGeneration,
+                       final boolean isCompactFlush,
+                       @NotNull final Iterator<Cell> iterator) throws IOException {
         if(!iterator.hasNext()) return;
-           final File file  =  new File(base, currentGeneration + TABLE + SUFFIX);
-           FileTable.writeTable (iterator, file);
+           final File file = new File(base, currentGeneration + TABLE + SUFFIX);
+           FileTable.writeTable(iterator, file);
            if(isCompactFlush) {
                fileTables.add(new FileTable(file, currentGeneration));
            }
@@ -156,30 +118,6 @@ public final class LSMDao implements DAO {
         return IteratorsTool.data(memTable, fileTables, from);
     }
 
-    private void compactDir(final long preGener) throws IOException {
-        fileTables = new ArrayList<>();
-        Files.walkFileTree(base.toPath(), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs)
-                    throws IOException {
-                final File file = path.toFile();
-                final Pattern FILE_NAME_PATTERN = Pattern.compile(TABLE);
-                final Matcher matcher = FILE_NAME_PATTERN.matcher(file.getName());
-                if (file.getName().endsWith(SUFFIX) && matcher.find()) {
-                    final String[] str = file.getName().split(TABLE);
-                    final long currentGeneration = Integer.parseInt(str[0]);
-                    if(currentGeneration >= preGener) {
-                        fileTables.add(new FileTable(file, currentGeneration));
-                        return FileVisitResult.CONTINUE;
-                    }
-                }
-                Files.delete(path);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        logger.info("Compaction done in time: " + System.currentTimeMillis());
-    }
-
     private final class FlusherTask implements Runnable {
 
         @Override
@@ -198,9 +136,7 @@ public final class LSMDao implements DAO {
                 } else {
                     flush(currentGeneration,false,data);
                 }
-                if(isCompactTable) {
-                     compactDir(currentGeneration);
-                } else {
+                if(!isCompactTable) {
                     memTable.flushed(currentGeneration);
                 }
                 } catch (InterruptedException e) {

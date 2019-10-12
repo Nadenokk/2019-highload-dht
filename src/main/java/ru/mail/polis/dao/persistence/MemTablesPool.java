@@ -28,13 +28,13 @@ public class MemTablesPool implements Table, Closeable {
     private final NavigableMap<Long, Table> pendingToFlushTables;
     private long generation;
     private final long flushLimit;
-    private final AtomicLong currentGeneration;
+    AtomicLong currentGeneration;
     private final BlockingQueue<FlushTable> flushingQueue;
 
     private final AtomicBoolean stop = new AtomicBoolean();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public MemTablesPool(final long generation, final long flushLimit) {
+    public MemTablesPool(@NotNull final long generation,@NotNull final long flushLimit) {
         this.generation = generation;
         this.flushLimit = flushLimit;
         this.currentMemTable = new MemTable(generation);
@@ -43,25 +43,16 @@ public class MemTablesPool implements Table, Closeable {
         this.flushingQueue = new ArrayBlockingQueue<>(2);
     }
 
-    public long getGeneration() {
-        lock.readLock().lock();
-        try {
-            return generation;
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
     @Override
     public long sizeInBytes() {
         lock.readLock().lock();
         try {
-            long size = currentMemTable.sizeInBytes();
-            return size;
+            return currentMemTable.sizeInBytes();
         }finally {
            lock.readLock().unlock();
         }
     }
+
     @NotNull
     @Override
     public Iterator<Cell> iterator(final @NotNull ByteBuffer from) throws IOException {
@@ -77,9 +68,8 @@ public class MemTablesPool implements Table, Closeable {
         } finally {
             lock.readLock().unlock();
         }
-        Iterator<Cell> mergeIterator = Iterators.mergeSorted(iterators, Cell.COMPARATOR);
-        final Iterator <Cell> withoutEquals = Iters.collapseEquals(mergeIterator, Cell::getKey);
-        return withoutEquals;
+        final Iterator<Cell> mergeIterator = Iterators.mergeSorted(iterators, Cell.COMPARATOR);
+        return Iters.collapseEquals(mergeIterator, Cell::getKey);
     }
 
     @Override
@@ -124,6 +114,7 @@ public class MemTablesPool implements Table, Closeable {
                 }
             }
     }
+
     @Override
     public long generation() {
         lock.readLock().lock();
@@ -137,6 +128,8 @@ public class MemTablesPool implements Table, Closeable {
     public FlushTable tableToFlush() throws InterruptedException {
         return flushingQueue.take();
     }
+
+    @NotNull
     public void flushed(final long generation) {
         lock.writeLock().lock();
         try {
@@ -146,6 +139,7 @@ public class MemTablesPool implements Table, Closeable {
             lock.writeLock().unlock();
         }
     }
+
     @Override
     public void close() throws IOException {
         if(!stop.compareAndSet(false, true)) {
@@ -166,7 +160,8 @@ public class MemTablesPool implements Table, Closeable {
         }
     }
 
-    public void compact(@NotNull final  Collection<FileTable> fileTables,long generation,File base) throws IOException {
+    @NotNull
+    public void compact(@NotNull final  Collection<FileTable> fileTables,final long generation,final File base) throws IOException {
         lock.readLock().lock();
         final Iterator<Cell> alive ;
         try {

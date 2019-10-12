@@ -4,8 +4,10 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 public class Cell {
-    public static final Comparator<Cell> COMPARATOR =
-            Comparator.comparing(Cell::getKey).thenComparing(Cell::getValue).thenComparing(Cell::getGeneration);
+
+    public static final Comparator<Cell> COMPARATOR = Comparator.comparing(Cell::getKey)
+                    .thenComparing(Cell::getValue)
+                    .thenComparing(Cell::getGeneration);
 
     private final ByteBuffer key;
     private final Value value;
@@ -29,5 +31,5 @@ public class Cell {
         return value;
     }
 
-    public long getGeneration() { return generation; }
+    public long getGeneration() { return generation;}
 }

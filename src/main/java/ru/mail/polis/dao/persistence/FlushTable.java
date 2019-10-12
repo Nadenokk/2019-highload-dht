@@ -3,6 +3,7 @@ package ru.mail.polis.dao.persistence;
 import java.util.Iterator;
 
 public class FlushTable {
+
     private final long generation;
     private final Iterator <Cell> data;
     private final boolean poisonPills;

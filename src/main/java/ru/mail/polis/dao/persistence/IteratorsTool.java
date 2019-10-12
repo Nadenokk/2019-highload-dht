@@ -2,7 +2,7 @@ package ru.mail.polis.dao.persistence;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collection;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +14,9 @@ public class IteratorsTool {
     private IteratorsTool() {
     }
 
-    public static Iterator<Cell> data(@NotNull final Table memTable,
-                                      @NotNull Collection<FileTable> fileTables,
+    @NotNull
+    public static final Iterator<Cell> data(@NotNull final Table memTable,
+                                      @NotNull final Collection<FileTable> fileTables,
                                       @NotNull final ByteBuffer from) throws IOException {
         final Collection<Iterator<Cell>> filesIterators = new ArrayList<>();
         for (final FileTable fileTable : fileTables) {

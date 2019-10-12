@@ -35,7 +35,6 @@ public final class MemTable implements Table {
     @NotNull
     @Override
     public Iterator<Cell> iterator(@NotNull final ByteBuffer from) {
-        //return Iterators.transform( map.tailMap(from).entrySet().iterator(), e -> new Cell(e.getKey(), e.getValue(), e.));
         final Iterator <Cell> value =  Iterators.transform(unmodifiable.tailMap(from)
                         .entrySet()
                         .iterator(),

@@ -31,5 +31,7 @@ public class Cell {
         return value;
     }
 
-    public long getGeneration() { return generation;}
+    public long getGeneration() {
+        return generation;
+    }
 }

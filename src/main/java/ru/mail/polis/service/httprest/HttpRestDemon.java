@@ -15,7 +15,6 @@ import ru.mail.polis.service.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.NoSuchElementException;
 
 public final class HttpRestDemon extends HttpServer implements Service{
 
@@ -28,8 +27,7 @@ public final class HttpRestDemon extends HttpServer implements Service{
 
     /**
      * Receives a request to an entity and respond depending on the method.
-     * @param id Entity iD
-     * @param request HTTP request
+     * @param id Entity id
      * @return HTTP response
      */
 
@@ -39,7 +37,7 @@ public final class HttpRestDemon extends HttpServer implements Service{
     }
 
     @Path("/v0/entity")
-    public Response entity ( @Param("id") final String id, final Request request){
+    public Response entity( @Param("id") final String id, final Request request){
 
         if(id == null || id.isEmpty()) {
             return new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8));
@@ -51,18 +49,12 @@ public final class HttpRestDemon extends HttpServer implements Service{
 
             switch (method) {
                 case Request.METHOD_GET:
-                    try {
                         final ByteBuffer value = dao.get(key).duplicate();
                         final byte[] response = new byte[value.duplicate().remaining()];
                         value.get(response);
                         return new Response(Response.OK,response );
-                    } catch (NoSuchElementException ex) {
-                        return new Response(Response.NOT_FOUND, Response.EMPTY);
-                    }
                 case Request.METHOD_PUT:
-                    final ByteBuffer value = ByteBuffer.wrap(request.getBody());
-                    dao.upsert(key, value);
-
+                    dao.upsert(key, ByteBuffer.wrap(request.getBody()));
                     return new Response(Response.CREATED, Response.EMPTY);
                 case Request.METHOD_DELETE:
                     dao.remove(key);

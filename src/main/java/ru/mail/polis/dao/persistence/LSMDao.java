@@ -28,7 +28,7 @@ public final class LSMDao implements DAO {
 
     public static final ByteBuffer nullBuffer = ByteBuffer.allocate(0);
     private final File base;
-    private Collection<FileTable> fileTables;
+    private final Collection<FileTable> fileTables;
     private final MemTablesPool memTable;
     private final long generation;
     final long flushThreshold;
@@ -85,12 +85,13 @@ public final class LSMDao implements DAO {
     private void flush(final long currentGeneration,
                        final boolean isCompactFlush,
                        @NotNull final Iterator<Cell> iterator) throws IOException {
-        if(!iterator.hasNext()) return;
-           final File file = new File(base, currentGeneration + TABLE + SUFFIX);
-           FileTable.writeTable(iterator, file);
-           if(isCompactFlush) {
-               fileTables.add(new FileTable(file, currentGeneration));
-           }
+        if(iterator.hasNext()) {
+            final File file = new File(base, currentGeneration + TABLE + SUFFIX);
+            FileTable.writeTable(iterator, file);
+            if (isCompactFlush) {
+                fileTables.add(new FileTable(file, currentGeneration));
+            }
+        }
     }
 
     @Override

@@ -148,7 +148,8 @@ public class MemTablesPool implements Table, Closeable {
         lock.writeLock().lock();
         FlushTable flushTable;
         try {
-            flushTable = new FlushTable(generation, currentMemTable.iterator(LSMDao.nullBuffer), true, false);
+            flushTable = new FlushTable(generation, currentMemTable.iterator(LSMDao.nullBuffer),
+                    true, false);
         } finally {
             lock.writeLock().unlock();
         }
@@ -161,7 +162,8 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @NotNull
-    public void compact(@NotNull final  Collection<FileTable> fileTables,final long generation,final File base) throws IOException {
+    public void compact(@NotNull final  Collection<FileTable> fileTables,
+                        final long generation,final File base) throws IOException {
         lock.readLock().lock();
         final Iterator<Cell> alive ;
         try {

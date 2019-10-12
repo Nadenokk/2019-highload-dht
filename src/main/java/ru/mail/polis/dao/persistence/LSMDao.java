@@ -33,7 +33,7 @@ public final class LSMDao implements DAO {
     public static final ByteBuffer nullBuffer = ByteBuffer.allocate(0);
     private final File base;
     private Collection<FileTable> fileTables;
-    private MemTablePools memTable;
+    private MemTablesPool memTable;
     private long generation;
     private final long flushThreshold;
     private final Thread flushedThread;
@@ -69,7 +69,7 @@ public final class LSMDao implements DAO {
         }
         maxGeneration.set(maxGeneration.get() + 1);
         this.generation= maxGeneration.get();
-        this.memTable = new MemTablePools(maxGeneration.get(),flushThreshold);
+        this.memTable = new MemTablesPool(maxGeneration.get(),flushThreshold);
         flushedThread = new Thread(new FlusherTask());
         flushedThread.start();
     }

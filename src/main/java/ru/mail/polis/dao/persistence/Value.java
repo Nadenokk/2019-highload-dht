@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.ByteBuffer;
 
 public final class Value implements Comparable<Value> {
+    private static final AtomicInteger atomicInteger = new AtomicInteger();
     private final long ts;
     private final ByteBuffer data;
-    private static final AtomicInteger atomicInteger = new AtomicInteger();
 
     Value(final long ts, final ByteBuffer data) {
         this.ts = ts;

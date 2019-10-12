@@ -19,19 +19,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 
 public final class MemTable implements Table {
-    private final SortedMap<ByteBuffer, Value> map = new TreeMap<>();
+    private final SortedMap<ByteBuffer, Value> map = new ConcurrentSkipListMap<>();
     private final SortedMap<ByteBuffer, Value> unmodifiable = Collections.unmodifiableSortedMap(map);
-    private long sizeInBytes;
-    //private final AtomicLong sizeInBytes = new AtomicLong();
+    private AtomicLong sizeInBytes = new AtomicLong();
     private final AtomicLong generation = new AtomicLong();
 
     MemTable(final long generation) {
         this.generation.set(generation);
     }
 
-
     public long sizeInBytes() {
-        return sizeInBytes;
+        return sizeInBytes.get();
     }
 
     @NotNull
@@ -56,11 +54,11 @@ public final class MemTable implements Table {
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         final Value previous = map.put(key, Value.of(value));
         if (previous == null) {
-            sizeInBytes += key.remaining() + value.remaining()+ Long.BYTES;
+            sizeInBytes.addAndGet(key.remaining() + value.remaining()+ Long.BYTES);
         } else if (previous.isRemoved()) {
-            sizeInBytes += value.remaining() + Long.BYTES;
+            sizeInBytes.addAndGet( value.remaining() + Long.BYTES);
         } else {
-            sizeInBytes += value.remaining() + Long.BYTES - previous.getData().remaining();
+            sizeInBytes.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());
         }
     }
 
@@ -68,11 +66,12 @@ public final class MemTable implements Table {
     public void remove(@NotNull final ByteBuffer key) {
         final Value previous = map.put(key, Value.tombstone());
         if (previous == null) {
-            sizeInBytes += key.remaining();
+            sizeInBytes.addAndGet(key.remaining());
         } else if (!previous.isRemoved()) {
-            sizeInBytes -= previous.getData().remaining();
+            sizeInBytes.addAndGet( - previous.getData().remaining());
         }
     }
+
     @Override
     public long generation() {
         return this.generation.get();

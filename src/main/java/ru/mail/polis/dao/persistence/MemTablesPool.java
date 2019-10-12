@@ -1,5 +1,6 @@
 package ru.mail.polis.dao.persistence;
 
+import java.io.IOException;
 import java.io.Closeable;
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -13,23 +14,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.NavigableMap;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.mail.polis.dao.Iters;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-import java.io.IOException;
-import java.util.NavigableMap;
-import java.util.ArrayList;
-
-public class MemTablePools implements Table, Closeable {
-
-     private static final Logger logger = LoggerFactory.getLogger(MemTablePools.class);
+public class MemTablesPool implements Table, Closeable {
 
     private volatile MemTable currentMemTable;
     private final NavigableMap<Long, Table> pendingToFlushTables;
@@ -41,7 +34,7 @@ public class MemTablePools implements Table, Closeable {
     private final AtomicBoolean stop = new AtomicBoolean();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public MemTablePools(final long generation, final long flushLimit) {
+    public MemTablesPool(final long generation, final long flushLimit) {
         this.generation = generation;
         this.flushLimit = flushLimit;
         this.currentMemTable = new MemTable(generation);
@@ -88,7 +81,6 @@ public class MemTablePools implements Table, Closeable {
         final Iterator <Cell> withoutEquals = Iters.collapseEquals(mergeIterator, Cell::getKey);
         return withoutEquals;
     }
-
 
     @Override
     public void upsert(final @NotNull ByteBuffer key, final @NotNull ByteBuffer value) {
@@ -173,7 +165,8 @@ public class MemTablePools implements Table, Closeable {
             Thread.currentThread().interrupt();
         }
     }
-public void compact(@NotNull final  Collection<FileTable> fileTables,long generation,File base) throws IOException {
+
+    public void compact(@NotNull final  Collection<FileTable> fileTables,long generation,File base) throws IOException {
         lock.readLock().lock();
         final Iterator<Cell> alive ;
         try {
@@ -182,13 +175,18 @@ public void compact(@NotNull final  Collection<FileTable> fileTables,long genera
             lock.readLock().unlock();
         }
         final File tmp = new File(base, generation + LSMDao.TABLE + LSMDao.TEMP);
+        lock.readLock().lock();
         FileTable.writeTable(alive, tmp);
-        for (final FileTable fileTable : fileTables) {
-            Files.delete(fileTable.getPath());
+        try {
+            for (final FileTable fileTable : fileTables) {
+                Files.delete(fileTable.getPath());
+            }
+            fileTables.clear();
+            final File file = new File(base, generation + LSMDao.TABLE + LSMDao.SUFFIX);
+            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
+            fileTables.add(new FileTable(file, generation));
+        }finally {
+            lock.readLock().unlock();
         }
-        fileTables.clear();
-        final File file = new File(base, generation + LSMDao.TABLE +  LSMDao.SUFFIX);
-        Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
-        fileTables.add(new FileTable(file,generation));
     }
 }

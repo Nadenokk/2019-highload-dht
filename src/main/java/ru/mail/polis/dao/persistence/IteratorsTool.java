@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class IteratorsTool {
-    private IteratorsTool() {;    }
+    private IteratorsTool() {
+    }
 
     public static Iterator<Cell> data(@NotNull final Table memTable,
                                       @NotNull Collection<FileTable> fileTables,

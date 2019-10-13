@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public final class IteratorsTool {
-
-    IteratorsTool(){
+    private IteratorsTool(){
 
     }
 
@@ -22,7 +21,7 @@ public final class IteratorsTool {
      * @param fileTables is collection witch collapse theirs iters with table
      * @param from is key from we get data
      * */
-    public static final Iterator<Cell> data(@NotNull final Table memTable,
+    public static Iterator<Cell> data(@NotNull final Table memTable,
                                       @NotNull final Collection<FileTable> fileTables,
                                       @NotNull final ByteBuffer from) throws IOException {
         final Collection<Iterator<Cell>> filesIterators = new ArrayList<>();

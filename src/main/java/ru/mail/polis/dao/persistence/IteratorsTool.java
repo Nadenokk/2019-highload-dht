@@ -16,7 +16,12 @@ public final class IteratorsTool {
 
     }
 
-    @NotNull
+    /**
+     * Simple helper to collapse data from tables.
+     * @param memTable is table witch collapse their iters with another tables
+     * @param fileTables is collection witch collapse theirs iters with table
+     * @param from is key from we get data
+     * */
     public static final Iterator<Cell> data(@NotNull final Table memTable,
                                       @NotNull final Collection<FileTable> fileTables,
                                       @NotNull final ByteBuffer from) throws IOException {

@@ -34,6 +34,12 @@ public class MemTablesPool implements Table, Closeable {
     private final AtomicBoolean stop = new AtomicBoolean();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+     /**
+     * Pool of mem table to flush.
+     *
+     * @param flushLimit      is the limit above which we flushing mem table
+     * @param generation is the start of generation
+     **/
     public MemTablesPool(@NotNull final long generation,@NotNull final long flushLimit) {
         this.generation = generation;
         this.flushLimit = flushLimit;
@@ -129,7 +135,11 @@ public class MemTablesPool implements Table, Closeable {
         return flushingQueue.take();
     }
 
-    @NotNull
+    /**
+     * Mark mem table as flushed and remove her from map storage of tables.
+     *
+     * @param generation is key by which we remove table from storage
+     */
     public void flushed(final long generation) {
         lock.writeLock().lock();
         try {
@@ -161,7 +171,13 @@ public class MemTablesPool implements Table, Closeable {
         }
     }
 
-    @NotNull
+    /**
+     * Compact values from all tables with current table.
+     *
+     * @param fileTables is all tables from disk storage
+     * @param generation is the start of generation
+     * @param base is the path
+     */
     public void compact(@NotNull final  Collection<FileTable> fileTables,
                         final long generation,final File base) throws IOException {
         lock.readLock().lock();

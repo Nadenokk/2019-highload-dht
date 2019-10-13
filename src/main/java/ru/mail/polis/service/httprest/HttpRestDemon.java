@@ -26,16 +26,18 @@ public final class HttpRestDemon extends HttpServer implements Service{
     }
 
     /**
-     * Receives a request to an entity and respond depending on the method.
-     * @param id Entity id
-     * @return HTTP response
+     * Get request by this url.
      */
-
     @Path("/v0/status")
     public Response status() {
         return Response.ok("OK");
     }
 
+    /**
+     * Receives a request to an entity and respond depending on the method.
+     * @param id Entity id
+     * @return HTTP response
+     */
     @Path("/v0/entity")
     public Response entity( @Param("id") final String id, final Request request){
 

@@ -10,7 +10,7 @@ import ru.mail.polis.dao.Iters;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class IteratorsTool {
+public final class IteratorsTool {
 
     IteratorsTool(){
 

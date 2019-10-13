@@ -12,6 +12,10 @@ import java.util.Iterator;
 
 public class IteratorsTool {
 
+    IteratorsTool(){
+
+    }
+
     @NotNull
     public static final Iterator<Cell> data(@NotNull final Table memTable,
                                       @NotNull final Collection<FileTable> fileTables,

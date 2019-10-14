@@ -47,7 +47,8 @@ public final class HttpRestDemon extends HttpServer implements Service{
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         return createResponse(request, key);
     }
-     private Response createResponse(@NotNull final Request request, @NotNull final ByteBuffer key) {
+
+    private Response createResponse(@NotNull final Request request, @NotNull final ByteBuffer key) {
         try {
             final var method = request.getMethod();
             switch (method) {
@@ -65,10 +66,9 @@ public final class HttpRestDemon extends HttpServer implements Service{
                 default:
                     return new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY);
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             return  new Response(Response.INTERNAL_ERROR, Response.EMPTY);
-        }catch (NoSuchElementException e) {
+        } catch (NoSuchElementException e) {
             return new Response(Response.NOT_FOUND, "Key not found".getBytes(StandardCharsets.UTF_8));
         }
     }

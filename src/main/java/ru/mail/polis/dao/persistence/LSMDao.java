@@ -4,8 +4,8 @@ import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 public final class LSMDao implements DAO {
 
-    private static final Logger logger = LoggerFactory.getLogger(LSMDao.class);
+   // private static final Logger logger = LoggerFactory.getLogger(LSMDao.class);
     public static final String SUFFIX = ".dat";
     public static final String TEMP = ".tmp";
     public static final String TABLE = "ssTable";
@@ -143,7 +143,8 @@ public final class LSMDao implements DAO {
                 } catch (InterruptedException e) {
                       Thread.currentThread().interrupt();
                 } catch (IOException e) {
-                      logger.info("Error :" + e.getMessage());
+                      //logger.info("Error :" + e.getMessage());
+                     e.printStackTrace();
                 }
             }
         }

@@ -15,11 +15,14 @@ import ru.mail.polis.service.Service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class HttpRestDemon extends HttpServer implements Service{
 
     private final DAO dao;
-
+    private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
     public HttpRestDemon(final int port, @NotNull final DAO dao) throws IOException {
         super(createService(port));
         this.dao = dao;
@@ -33,28 +36,31 @@ public final class HttpRestDemon extends HttpServer implements Service{
         return Response.ok("OK");
     }
 
-    /**
+     /**
      * Receives a request to an entity and respond depending on the method.
      * @param id Entity id
      * @return HTTP response
      */
     @Path("/v0/entity")
-    public Response entity( @Param("id") final String id, final Request request){
+    public Response entity ( @Param("id") final String id, final Request request){
 
         if(id == null || id.isEmpty()) {
             return new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8));
         }
-
         try {
             final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
             final var method = request.getMethod();
 
             switch (method) {
                 case Request.METHOD_GET:
+                    try {
                         final ByteBuffer value = dao.get(key).duplicate();
                         final byte[] response = new byte[value.duplicate().remaining()];
-                        value.get(response);
+                                                value.get(response);
                         return new Response(Response.OK,response );
+                    } catch (NoSuchElementException ex) {
+                        return new Response(Response.NOT_FOUND, Response.EMPTY);
+                    }
                 case Request.METHOD_PUT:
                     dao.upsert(key, ByteBuffer.wrap(request.getBody()));
                     return new Response(Response.CREATED, Response.EMPTY);
@@ -64,22 +70,22 @@ public final class HttpRestDemon extends HttpServer implements Service{
                 default:
                     return new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY);
             }
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             return  new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         }
     }
 
     private static HttpServerConfig createService(final int port) {
-        final var acceptorConfig = new AcceptorConfig();
-        final HttpServerConfig config = new HttpServerConfig();
+        var acceptorConfig = new AcceptorConfig();
+        HttpServerConfig config = new HttpServerConfig();
         acceptorConfig.port = port;
         config.acceptors = new AcceptorConfig[]{acceptorConfig};
         return config;
     }
 
     @Override
-    public void handleDefault(final Request request, final HttpSession session) throws IOException {
+    public void handleDefault(Request request, HttpSession session) throws IOException {
         session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 }
-

@@ -48,7 +48,7 @@ public final class HttpRestDemon extends HttpServer implements Service{
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         final var method = request.getMethod();
-        
+
         try {
             switch (method) {
                 case Request.METHOD_GET:

@@ -40,26 +40,22 @@ public final class HttpRestDemon extends HttpServer implements Service{
      * @return HTTP response
      */
     @Path("/v0/entity")
-    public Response entity(@Param("id") final String id, final Request request){
-
-        if(id == null || id.isEmpty()) {
+    public Response entity(@Param("id") final String id, final Request request) {
+        if (id == null || id.isEmpty()) {
             return new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8));
         }
-
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        final var method = request.getMethod();
-
+        return createResponse(request, key);
+    }
+     private Response createResponse(@NotNull final Request request, @NotNull final ByteBuffer key) {
         try {
+            final var method = request.getMethod();
             switch (method) {
                 case Request.METHOD_GET:
-                    try {
-                        final ByteBuffer value = dao.get(key).duplicate();
-                        final byte[] response = new byte[value.duplicate().remaining()];
-                                                value.get(response);
-                        return new Response(Response.OK,response );
-                    } catch (NoSuchElementException ex) {
-                        return new Response(Response.NOT_FOUND, Response.EMPTY);
-                    }
+                    final ByteBuffer value = dao.get(key).duplicate();
+                    final byte[] response = new byte[value.duplicate().remaining()];
+                    value.get(response);
+                    return new Response(Response.OK,response );
                 case Request.METHOD_PUT:
                     dao.upsert(key, ByteBuffer.wrap(request.getBody()));
                     return new Response(Response.CREATED, Response.EMPTY);
@@ -72,6 +68,8 @@ public final class HttpRestDemon extends HttpServer implements Service{
         }
         catch (IOException ex) {
             return  new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+        }catch (NoSuchElementException e) {
+            return new Response(Response.NOT_FOUND, "Key not found".getBytes(StandardCharsets.UTF_8));
         }
     }
 

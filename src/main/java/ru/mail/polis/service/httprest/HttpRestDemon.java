@@ -40,15 +40,16 @@ public final class HttpRestDemon extends HttpServer implements Service{
      * @return HTTP response
      */
     @Path("/v0/entity")
-    public Response entity ( @Param("id") final String id, final Request request){
+    public Response entity(@Param("id") final String id, final Request request){
 
         if(id == null || id.isEmpty()) {
             return new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8));
         }
-        try {
-            final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-            final var method = request.getMethod();
 
+        final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
+        final var method = request.getMethod();
+        
+        try {
             switch (method) {
                 case Request.METHOD_GET:
                     try {
@@ -75,15 +76,15 @@ public final class HttpRestDemon extends HttpServer implements Service{
     }
 
     private static HttpServerConfig createService(final int port) {
-        var acceptorConfig = new AcceptorConfig();
-        HttpServerConfig config = new HttpServerConfig();
+        final var acceptorConfig = new AcceptorConfig();
+        final HttpServerConfig config = new HttpServerConfig();
         acceptorConfig.port = port;
         config.acceptors = new AcceptorConfig[]{acceptorConfig};
         return config;
     }
 
     @Override
-    public void handleDefault(Request request, HttpSession session) throws IOException {
+    public void handleDefault(final Request request, final HttpSession session) throws IOException {
         session.sendResponse(new Response(Response.BAD_REQUEST, Response.EMPTY));
     }
 }

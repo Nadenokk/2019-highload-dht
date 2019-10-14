@@ -16,14 +16,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class HttpRestDemon extends HttpServer implements Service{
 
     private final DAO dao;
-    private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
-    public HttpRestDemon(final int port, @NotNull final DAO dao) throws IOException {
+
+    public HttpRestDemon(@NotNull final int port, @NotNull final DAO dao) throws IOException {
         super(createService(port));
         this.dao = dao;
     }

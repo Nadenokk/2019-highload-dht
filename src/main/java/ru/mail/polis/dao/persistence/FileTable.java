@@ -28,8 +28,6 @@ public final class FileTable implements Table {
         this.sizeFileInByte = sizeFile;
         final ByteBuffer mapped;
 
-
-
         try (FileChannel fc = FileChannel.open(file.toPath(), StandardOpenOption.READ);) {
             assert sizeFile <= Integer.MAX_VALUE;
             mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size())

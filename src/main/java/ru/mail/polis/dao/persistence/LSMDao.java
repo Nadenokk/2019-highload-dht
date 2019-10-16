@@ -22,7 +22,6 @@ public final class LSMDao implements DAO {
     public static final String SUFFIX = ".dat";
     public static final String TEMP = ".tmp";
     public static final String TABLE = "ssTable";
-
     public static final ByteBuffer nullBuffer = ByteBuffer.allocate(0);
     private final File base;
     private final Collection<FileTable> fileTables;

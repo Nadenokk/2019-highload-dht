@@ -83,7 +83,14 @@ public class MemTablesPool implements Table, Closeable {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
-        currentMemTable.upsert(key, value);
+        try {
+            lock.readLock().lock();
+            currentMemTable.upsert(key, value);
+        } finally {
+            lock.readLock().unlock();
+        }
+
+
         enqueueFlush();
     }
 
@@ -92,7 +99,12 @@ public class MemTablesPool implements Table, Closeable {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
-        currentMemTable.remove(key);
+        try {
+            lock.readLock().lock();
+            currentMemTable.remove(key);
+        } finally {
+            lock.readLock().unlock();
+        }
         enqueueFlush();
     }
 

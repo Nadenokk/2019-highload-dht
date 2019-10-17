@@ -11,12 +11,13 @@ import one.nio.server.AcceptorConfig;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.service.Service;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 
-public final class HttpRestDemon extends HttpServer implements Service{
+public final class HttpRestDemon extends HttpServer implements Service {
 
     private final DAO dao;
 
@@ -33,8 +34,9 @@ public final class HttpRestDemon extends HttpServer implements Service{
         return Response.ok("OK");
     }
 
-     /**
+    /**
      * Receives a request to an entity and respond depending on the method.
+     *
      * @param id Entity id
      * @return HTTP response
      */
@@ -55,7 +57,7 @@ public final class HttpRestDemon extends HttpServer implements Service{
                     final ByteBuffer value = dao.get(key).duplicate();
                     final byte[] response = new byte[value.duplicate().remaining()];
                     value.get(response);
-                    return new Response(Response.OK,response );
+                    return new Response(Response.OK, response);
                 case Request.METHOD_PUT:
                     dao.upsert(key, ByteBuffer.wrap(request.getBody()));
                     return new Response(Response.CREATED, Response.EMPTY);
@@ -66,7 +68,7 @@ public final class HttpRestDemon extends HttpServer implements Service{
                     return new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY);
             }
         } catch (IOException ex) {
-            return  new Response(Response.INTERNAL_ERROR, Response.EMPTY);
+            return new Response(Response.INTERNAL_ERROR, Response.EMPTY);
         } catch (NoSuchElementException e) {
             return new Response(Response.NOT_FOUND, "Key not found".getBytes(StandardCharsets.UTF_8));
         }

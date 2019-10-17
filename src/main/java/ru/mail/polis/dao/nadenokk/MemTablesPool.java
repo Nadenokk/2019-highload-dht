@@ -17,6 +17,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.NavigableMap;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.Iters;
@@ -33,13 +34,13 @@ public class MemTablesPool implements Table, Closeable {
     private final AtomicBoolean stop = new AtomicBoolean();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-     /**
+    /**
      * Pool of mem table to flush.
      *
-     * @param flushLimit      is the limit above which we flushing mem table
+     * @param flushLimit is the limit above which we flushing mem table
      * @param generation is the start of generation
      **/
-    public MemTablesPool(@NotNull final long generation,@NotNull final long flushLimit) {
+    public MemTablesPool(@NotNull final long generation, @NotNull final long flushLimit) {
         this.generation = generation;
         this.flushLimit = flushLimit;
         this.currentMemTable = new MemTable(generation);
@@ -53,8 +54,8 @@ public class MemTablesPool implements Table, Closeable {
         lock.readLock().lock();
         try {
             return currentMemTable.sizeInBytes();
-        }finally {
-           lock.readLock().unlock();
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
@@ -79,7 +80,7 @@ public class MemTablesPool implements Table, Closeable {
 
     @Override
     public void upsert(final @NotNull ByteBuffer key, final @NotNull ByteBuffer value) {
-        if(stop.get()) {
+        if (stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
         try {
@@ -93,7 +94,7 @@ public class MemTablesPool implements Table, Closeable {
 
     @Override
     public void remove(final @NotNull ByteBuffer key) {
-        if(stop.get()) {
+        if (stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
         try {
@@ -106,7 +107,7 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     private void enqueueFlush() {
-        if(currentMemTable.sizeInBytes() > flushLimit) {
+        if (currentMemTable.sizeInBytes() > flushLimit) {
             lock.writeLock().lock();
             FlushTable flushTable = null;
             try {
@@ -154,15 +155,14 @@ public class MemTablesPool implements Table, Closeable {
         lock.writeLock().lock();
         try {
             pendingToFlushTables.remove(generation);
-        }
-        finally {
+        } finally {
             lock.writeLock().unlock();
         }
     }
 
     @Override
     public void close() {
-        if(!stop.compareAndSet(false, true)) {
+        if (!stop.compareAndSet(false, true)) {
             return;
         }
         lock.writeLock().lock();
@@ -186,14 +186,14 @@ public class MemTablesPool implements Table, Closeable {
      *
      * @param fileTables is all tables from disk storage
      * @param generation is the start of generation
-     * @param base is the path
+     * @param base       is the path
      */
-    public void compact(@NotNull final  Collection<FileTable> fileTables,
-                        final long generation,final File base) throws IOException {
+    public void compact(@NotNull final Collection<FileTable> fileTables,
+                        final long generation, final File base) throws IOException {
         lock.readLock().lock();
-        final Iterator<Cell> alive ;
+        final Iterator<Cell> alive;
         try {
-            alive = IteratorsTool.data(currentMemTable,fileTables,LSMDao.nullBuffer);
+            alive = IteratorsTool.data(currentMemTable, fileTables, LSMDao.nullBuffer);
         } finally {
             lock.readLock().unlock();
         }
@@ -208,7 +208,7 @@ public class MemTablesPool implements Table, Closeable {
             final File file = new File(base, generation + LSMDao.TABLE + LSMDao.SUFFIX);
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
             fileTables.add(new FileTable(file, generation));
-        }finally {
+        } finally {
             lock.readLock().unlock();
         }
     }

@@ -2,6 +2,7 @@ package ru.mail.polis.dao.nadenokk;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
+
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.SortedMap;
@@ -13,7 +14,7 @@ public final class MemTable implements Table {
     private final SortedMap<ByteBuffer, Value> map = new ConcurrentSkipListMap<>();
     private final SortedMap<ByteBuffer, Value> unmodifiable = Collections.unmodifiableSortedMap(map);
     private final AtomicLong sizeInBytes = new AtomicLong();
-    private final long generation ;
+    private final long generation;
 
     MemTable(final long generation) {
         this.generation = generation;
@@ -29,16 +30,16 @@ public final class MemTable implements Table {
         return Iterators.transform(unmodifiable.tailMap(from)
                         .entrySet().iterator(),
                 input -> Cell.of(input.getKey(), input.getValue(), generation)
-                    );
+        );
     }
 
     @Override
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         final Value previous = map.put(key, Value.of(value));
         if (previous == null) {
-            sizeInBytes.addAndGet(key.remaining() + value.remaining()+ Long.BYTES);
+            sizeInBytes.addAndGet(key.remaining() + value.remaining() + Long.BYTES);
         } else if (previous.isRemoved()) {
-            sizeInBytes.addAndGet( value.remaining() + Long.BYTES);
+            sizeInBytes.addAndGet(value.remaining() + Long.BYTES);
         } else {
             sizeInBytes.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());
         }
@@ -50,7 +51,7 @@ public final class MemTable implements Table {
         if (previous == null) {
             sizeInBytes.addAndGet(key.remaining());
         } else if (!previous.isRemoved()) {
-            sizeInBytes.addAndGet( - previous.getData().remaining());
+            sizeInBytes.addAndGet(-previous.getData().remaining());
         }
     }
 

@@ -5,12 +5,12 @@ import java.util.Iterator;
 public class FlushTable {
 
     private final long generation;
-    private final Iterator <Cell> data;
+    private final Iterator<Cell> data;
     private final boolean poisonPills;
     private final boolean compactionTable;
 
     FlushTable(final long generation,
-               final Iterator <Cell> data,
+               final Iterator<Cell> data,
                final boolean poisonPills,
                final boolean compactionTable) {
         this.generation = generation;
@@ -19,7 +19,7 @@ public class FlushTable {
         this.compactionTable = compactionTable;
     }
 
-    FlushTable(final long generation, final Iterator <Cell> data, final boolean compactionTable) {
+    FlushTable(final long generation, final Iterator<Cell> data, final boolean compactionTable) {
         this(generation, data, false, compactionTable);
     }
 

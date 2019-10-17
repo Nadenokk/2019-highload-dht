@@ -6,8 +6,8 @@ import java.util.Comparator;
 public class Cell {
 
     public static final Comparator<Cell> COMPARATOR = Comparator.comparing(Cell::getKey)
-                    .thenComparing(Cell::getValue)
-                    .thenComparing(Cell::getGeneration);
+            .thenComparing(Cell::getValue)
+            .thenComparing(Cell::getGeneration);
 
     private final ByteBuffer key;
     private final Value value;
@@ -19,8 +19,8 @@ public class Cell {
         this.generation = generation;
     }
 
-    public  static Cell of(final ByteBuffer key, final Value value,final long generation) {
-       return new Cell(key,value,generation);
+    public static Cell of(final ByteBuffer key, final Value value, final long generation) {
+        return new Cell(key, value, generation);
     }
 
     public ByteBuffer getKey() {

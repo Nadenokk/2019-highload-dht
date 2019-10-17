@@ -1,4 +1,4 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import java.io.IOException;
 import java.io.Closeable;
@@ -17,7 +17,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.NavigableMap;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.Iters;
@@ -61,7 +60,7 @@ public class MemTablesPool implements Table, Closeable {
 
     @NotNull
     @Override
-    public Iterator<Cell> iterator(final @NotNull ByteBuffer from) throws IOException {
+    public Iterator<Cell> iterator(final @NotNull ByteBuffer from) {
         lock.readLock().lock();
         final Collection<Iterator<Cell>> iterators;
         try {
@@ -89,8 +88,6 @@ public class MemTablesPool implements Table, Closeable {
         } finally {
             lock.readLock().unlock();
         }
-
-
         enqueueFlush();
     }
 
@@ -109,28 +106,29 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     private void enqueueFlush() {
+        if(currentMemTable.sizeInBytes() > flushLimit) {
             lock.writeLock().lock();
             FlushTable flushTable = null;
-             try {
+            try {
 
-                 if (currentMemTable.sizeInBytes() > flushLimit) {
-                     flushTable = new FlushTable(generation,
-                            currentMemTable.iterator(LSMDao.nullBuffer),
-                            false);
-                     pendingToFlushTables.put(generation, currentMemTable);
-                     generation = generation + 1;
-                     currentMemTable = new MemTable(generation);
-                 }
-             } finally {
+                if (currentMemTable.sizeInBytes() > flushLimit) {
+                    flushTable = new FlushTable(generation,
+                            currentMemTable.iterator(LSMDao.nullBuffer), false);
+                    pendingToFlushTables.put(generation, currentMemTable);
+                    generation = generation + 1;
+                    currentMemTable = new MemTable(generation);
+                }
+            } finally {
                 lock.writeLock().unlock();
             }
-            if(flushTable != null) {
+            if (flushTable != null) {
                 try {
                     flushingQueue.put(flushTable);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
+        }
     }
 
     @Override
@@ -163,7 +161,7 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         if(!stop.compareAndSet(false, true)) {
             return;
         }

@@ -1,2 +1,4 @@
 # Default ignored files
 /workspace.xml
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties

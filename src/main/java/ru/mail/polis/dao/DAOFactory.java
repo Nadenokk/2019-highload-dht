@@ -18,7 +18,7 @@ package ru.mail.polis.dao;
 
 import java.io.File;
 import java.io.IOException;
-import ru.mail.polis.dao.persistence.LSMDao;
+import ru.mail.polis.dao.nadenokk.LSMDao;
 
 import org.jetbrains.annotations.NotNull;
 

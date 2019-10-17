@@ -13,8 +13,7 @@
 !settings.gradle
 !checkstyle.xml
 !.codeclimate.yml
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+!gradle/*
 !wrk+async/*
 
 # ...even if they are in subdirectories

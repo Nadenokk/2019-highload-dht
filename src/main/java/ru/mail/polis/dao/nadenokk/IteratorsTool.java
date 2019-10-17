@@ -1,9 +1,8 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
-
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.Iters;

@@ -1,10 +1,9 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.Record;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,9 +15,11 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class LSMDao implements DAO {
-
+    private static final Logger LOG = LoggerFactory.getLogger(LSMDao.class);
     public static final String SUFFIX = ".dat";
     public static final String TEMP = ".tmp";
     public static final String TABLE = "ssTable";
@@ -55,22 +56,22 @@ public final class LSMDao implements DAO {
                         maxGeneration.set(Math.max(maxGeneration.get(), Long.parseLong(str[0])));
                         fileTables.add(new FileTable(file,Long.parseLong(str[0])));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOG.error("I/O error ", e);
                     }
                 }
             });
         }
-        maxGeneration.set(maxGeneration.get() + 1);
+        maxGeneration.incrementAndGet();
         this.generation = maxGeneration.get();
         this.memTable = new MemTablesPool(maxGeneration.get(),flushThreshold);
-        flushedThread = new Thread(new FlusherTask());
+        this.flushedThread = new Thread(new FlusherTask());
         flushedThread.start();
     }
 
     @NotNull
     @Override
     public Iterator<Record> iterator(@NotNull final ByteBuffer from) throws IOException {
-        return Iterators.transform( cellIterator(from), cell -> Record.of(cell.getKey(), cell.getValue().getData()));
+        return Iterators.transform(cellIterator(from), cell -> Record.of(cell.getKey(), cell.getValue().getData()));
     }
 
     @Override
@@ -123,23 +124,23 @@ public final class LSMDao implements DAO {
             while (!Thread.currentThread().isInterrupted() && !poisonReceived) {
                 FlushTable flushTable;
                 try {
-                flushTable = memTable.tableToFlush();
-                final Iterator<Cell> data = flushTable.data();
-                final long currentGeneration = flushTable.getGeneration();
-                poisonReceived = flushTable.isPoisonPills();
-                final boolean isCompactTable = flushTable.isCompactionTable();
-                if(isCompactTable || poisonReceived) {
-                flush(currentGeneration,true,data);
+                    flushTable = memTable.tableToFlush();
+                    final Iterator<Cell> data = flushTable.data();
+                    final long currentGeneration = flushTable.getGeneration();
+                    poisonReceived = flushTable.isPoisonPills();
+                    final boolean isCompactTable = flushTable.isCompactionTable();
+                    if(isCompactTable || poisonReceived) {
+                        flush(currentGeneration,true,data);
                 } else {
                     flush(currentGeneration,false,data);
                 }
-                if(!isCompactTable) {
-                    memTable.flushed(currentGeneration);
-                }
+                    if(!isCompactTable) {
+                        memTable.flushed(currentGeneration);
+                    }
                 } catch (InterruptedException e) {
                       Thread.currentThread().interrupt();
                 } catch (IOException e) {
-                     e.printStackTrace();
+                     LOG.error("I/O error ", e);
                 }
             }
         }

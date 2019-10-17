@@ -1,4 +1,4 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import java.util.Iterator;
 

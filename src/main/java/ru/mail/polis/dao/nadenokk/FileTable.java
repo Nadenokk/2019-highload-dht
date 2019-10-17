@@ -1,7 +1,6 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,8 +12,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class FileTable implements Table {
+    private static final Logger LOG = LoggerFactory.getLogger(FileTable.class);
     private final int rows;
     private final IntBuffer offsets;
     private final ByteBuffer cells;
@@ -98,7 +100,7 @@ public final class FileTable implements Table {
             // Cells
             fc.write(fromInt(offsets.size()));
         } catch (IOException e){
-            e.printStackTrace();
+            LOG.error("I/O error ", e);
         }
     }
 

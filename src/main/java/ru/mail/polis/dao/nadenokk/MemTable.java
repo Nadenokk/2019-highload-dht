@@ -1,28 +1,22 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
-
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.SortedMap;
-import com.google.common.base.Function;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
-
-
 
 public final class MemTable implements Table {
     private final SortedMap<ByteBuffer, Value> map = new ConcurrentSkipListMap<>();
     private final SortedMap<ByteBuffer, Value> unmodifiable = Collections.unmodifiableSortedMap(map);
-    private AtomicLong sizeInBytes = new AtomicLong();
-    private final AtomicLong generation = new AtomicLong();
+    private final AtomicLong sizeInBytes = new AtomicLong();
+    private final long generation ;
 
     MemTable(final long generation) {
-        this.generation.set(generation);
+        this.generation = generation;
     }
 
     public long sizeInBytes() {
@@ -32,18 +26,10 @@ public final class MemTable implements Table {
     @NotNull
     @Override
     public Iterator<Cell> iterator(@NotNull final ByteBuffer from) {
-        final Iterator <Cell> value =  Iterators.transform(unmodifiable.tailMap(from)
-                        .entrySet()
-                        .iterator(),
-                new Function<Map.Entry<ByteBuffer, Value>, Cell>() {
-                    @NotNull
-                    @Override
-                    public Cell apply(Map.@Nullable Entry<ByteBuffer, Value> input) {
-                        return Cell.of(input.getKey(), input.getValue(), generation.get());
-                    }
-                });
-
-        return value;
+        return Iterators.transform(unmodifiable.tailMap(from)
+                        .entrySet().iterator(),
+                input -> Cell.of(input.getKey(), input.getValue(), generation)
+                    );
     }
 
     @Override
@@ -70,7 +56,7 @@ public final class MemTable implements Table {
 
     @Override
     public long generation() {
-        return this.generation.get();
+        return this.generation;
     }
 
 }

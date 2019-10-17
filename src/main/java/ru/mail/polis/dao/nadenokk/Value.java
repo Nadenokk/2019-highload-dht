@@ -1,8 +1,7 @@
-package ru.mail.polis.dao.persistence;
+package ru.mail.polis.dao.nadenokk;
 
 import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import java.nio.ByteBuffer;
 
 public final class Value implements Comparable<Value> {

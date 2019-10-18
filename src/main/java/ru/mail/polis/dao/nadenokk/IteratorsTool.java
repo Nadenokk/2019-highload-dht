@@ -25,7 +25,7 @@ public final class IteratorsTool {
      */
     public static Iterator<Cell> data(@NotNull final Table memTable,
                                       @NotNull final Collection<FileTable> fileTables,
-                                      @NotNull final ByteBuffer from) throws IOException {
+                                      @NotNull final ByteBuffer from) {
         final Collection<Iterator<Cell>> filesIterators = new ArrayList<>();
         for (final FileTable fileTable : fileTables) {
             filesIterators.add(fileTable.iterator(from));
@@ -33,6 +33,9 @@ public final class IteratorsTool {
         filesIterators.add(memTable.iterator(from));
         final Iterator<Cell> cells = Iters.collapseEquals(Iterators
                 .mergeSorted(filesIterators, Cell.COMPARATOR), Cell::getKey);
-        return Iterators.filter(cells, cell -> !cell.getValue().isRemoved());
+        return Iterators.filter(cells, cell -> {
+            assert cell != null;
+            return !cell.getValue().isRemoved();
+        });
     }
 }

@@ -30,7 +30,6 @@ public final class LSMDao implements DAO {
     private final Collection<FileTable> fileTables;
     private final MemTablesPool memTable;
     private final long generation;
-    final long flushThreshold;
     private final Thread flushedThread;
 
     /**
@@ -43,7 +42,6 @@ public final class LSMDao implements DAO {
     public LSMDao(final File base, final long flushThreshold) throws IOException {
         assert flushThreshold >= 0L;
         this.base = base;
-        this.flushThreshold = flushThreshold;
         this.fileTables = new ArrayList<>();
 
         final AtomicLong maxGeneration = new AtomicLong();
@@ -72,12 +70,15 @@ public final class LSMDao implements DAO {
 
     @NotNull
     @Override
-    public Iterator<Record> iterator(@NotNull final ByteBuffer from) throws IOException {
-        return Iterators.transform(cellIterator(from), cell -> Record.of(cell.getKey(), cell.getValue().getData()));
+    public Iterator<Record> iterator(@NotNull final ByteBuffer from) {
+        return Iterators.transform(cellIterator(from), cell -> {
+            assert cell != null;
+            return Record.of(cell.getKey(), cell.getValue().getData());
+        });
     }
 
     @Override
-    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
+    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value){
         memTable.upsert(key, value);
     }
 
@@ -94,12 +95,12 @@ public final class LSMDao implements DAO {
     }
 
     @Override
-    public void remove(@NotNull final ByteBuffer key) throws IOException {
+    public void remove(@NotNull final ByteBuffer key) {
         memTable.remove(key);
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         memTable.close();
         try {
             flushedThread.join();
@@ -114,7 +115,7 @@ public final class LSMDao implements DAO {
     }
 
     @NotNull
-    private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
+    private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) {
         return IteratorsTool.data(memTable, fileTables, from);
     }
 

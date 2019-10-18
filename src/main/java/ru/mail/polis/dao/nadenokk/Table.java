@@ -2,7 +2,6 @@ package ru.mail.polis.dao.nadenokk;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-
 import org.jetbrains.annotations.NotNull;
 
 public interface Table {

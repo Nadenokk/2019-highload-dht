@@ -4,7 +4,6 @@ import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.Record;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +52,7 @@ public final class LSMDao implements DAO {
                     final String[] str = file.getName().split(TABLE);
                     try {
                         maxGeneration.set(Math.max(maxGeneration.get(), Long.parseLong(str[0])));
-                        fileTables.add(new FileTable(file, Long.parseLong(str[0])));
+                        fileTables.add(new FileTable(file,Long.parseLong(str[0])));
                     } catch (IOException e) {
                         LOG.error("I/O error ", e);
                     }
@@ -63,7 +61,7 @@ public final class LSMDao implements DAO {
         }
         maxGeneration.incrementAndGet();
         this.generation = maxGeneration.get();
-        this.memTable = new MemTablesPool(maxGeneration.get(), flushThreshold);
+        this.memTable = new MemTablesPool(maxGeneration.get(),flushThreshold);
         this.flushedThread = new Thread(new FlusherTask());
         flushedThread.start();
     }
@@ -85,7 +83,7 @@ public final class LSMDao implements DAO {
     private void flush(final long currentGeneration,
                        final boolean isCompactFlush,
                        @NotNull final Iterator<Cell> iterator) throws IOException {
-        if (iterator.hasNext()) {
+        if(iterator.hasNext()) {
             final File file = new File(base, currentGeneration + TABLE + SUFFIX);
             FileTable.writeTable(iterator, file);
             if (isCompactFlush) {
@@ -111,7 +109,7 @@ public final class LSMDao implements DAO {
 
     @Override
     public void compact() throws IOException {
-        memTable.compact(fileTables, generation, base);
+        memTable.compact(fileTables,generation,base);
     }
 
     @NotNull
@@ -132,12 +130,12 @@ public final class LSMDao implements DAO {
                     final long currentGeneration = flushTable.getGeneration();
                     poisonReceived = flushTable.isPoisonPills();
                     final boolean isCompactTable = flushTable.isCompactionTable();
-                    if (isCompactTable || poisonReceived) {
-                        flush(currentGeneration, true, data);
+                    if(isCompactTable || poisonReceived) {
+                        flush(currentGeneration,true,data);
                     } else {
-                        flush(currentGeneration, false, data);
+                        flush(currentGeneration,false,data);
                     }
-                    if (!isCompactTable) {
+                    if(!isCompactTable) {
                         memTable.flushed(currentGeneration);
                     }
                 } catch (InterruptedException e) {

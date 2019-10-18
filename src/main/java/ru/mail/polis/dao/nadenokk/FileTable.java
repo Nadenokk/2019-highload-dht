@@ -1,7 +1,6 @@
 package ru.mail.polis.dao.nadenokk;
 
 import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,7 +12,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,16 +55,14 @@ public final class FileTable implements Table {
     public long sizeInBytes() {
         return sizeFileInByte;
     }
-
     /**
      * Writes MemTable data to disk.
      *
      * @param cells iterator of MemTable
-     * @param file  path of the file where data needs to be written
-     * @throws IOException if an I/O error occurred
+     * @param file    path of the file where data needs to be written
      */
 
-    static void writeTable(final Iterator<Cell> cells, final File file) throws IOException {
+    static void writeTable(final Iterator<Cell> cells, final File file) {
         final List<Integer> offsets = new ArrayList<>();
         try (FileChannel fc = FileChannel.open(file.toPath(),
                 StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
@@ -80,7 +76,7 @@ public final class FileTable implements Table {
                 // Key
                 fc.write(fromInt(keySize));
                 fc.write(key);
-                offset += keySize + Integer.BYTES + Long.BYTES;
+                offset += keySize +Integer.BYTES+ Long.BYTES;
                 // Timestamp
                 if (value.isRemoved()) {
                     fc.write(fromLong(-cell.getValue().getTimeStamp()));
@@ -102,7 +98,7 @@ public final class FileTable implements Table {
             }
             // Cells
             fc.write(fromInt(offsets.size()));
-        } catch (IOException e) {
+        } catch (IOException e){
             LOG.error("I/O error ", e);
         }
     }
@@ -180,14 +176,14 @@ public final class FileTable implements Table {
         };
     }
 
-    static ByteBuffer fromInt(final int value) {
+    private static ByteBuffer fromInt(final int value) {
         final ByteBuffer result = ByteBuffer.allocate(Integer.BYTES);
         result.putInt(value);
         result.rewind();
         return result;
     }
 
-    static ByteBuffer fromLong(final long value) {
+    private static ByteBuffer fromLong(final long value) {
         final ByteBuffer result = ByteBuffer.allocate(Long.BYTES);
         result.putLong(value);
         result.rewind();

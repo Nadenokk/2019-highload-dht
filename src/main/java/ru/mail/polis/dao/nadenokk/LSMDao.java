@@ -49,10 +49,10 @@ public final class LSMDao implements DAO {
             pStream.collect(Collectors.toList()).forEach(path -> {
                 final File file = path.toFile();
                 if (!path.getFileName().toString().startsWith("trash")) {
-                    final String[] str = file.getName().split(TABLE);
+                    final Long tmpGen = Long.parseLong(file.getName().replaceAll(TABLE+SUFFIX,""));
                     try {
-                        maxGeneration.set(Math.max(maxGeneration.get(), Long.parseLong(str[0])));
-                        fileTables.add(new FileTable(file,Long.parseLong(str[0])));
+                        maxGeneration.set(Math.max(maxGeneration.get(), tmpGen));
+                        fileTables.add(new FileTable(file,tmpGen));
                     } catch (IOException e) {
                         LOG.error("I/O error ", e);
                     }

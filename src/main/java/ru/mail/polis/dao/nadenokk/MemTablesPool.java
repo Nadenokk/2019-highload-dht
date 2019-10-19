@@ -57,6 +57,7 @@ public class MemTablesPool implements Table, Closeable {
 
     @NotNull
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public Iterator<Cell> iterator(final @NotNull ByteBuffer from) {
         lock.readLock().lock();
         final Collection<Iterator<Cell>> iterators;
@@ -70,11 +71,13 @@ public class MemTablesPool implements Table, Closeable {
         } finally {
             lock.readLock().unlock();
         }
+
         final Iterator<Cell> mergeIterator = Iterators.mergeSorted(iterators, Cell.COMPARATOR);
         return Iters.collapseEquals(mergeIterator, Cell::getKey);
     }
 
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public void upsert(final @NotNull ByteBuffer key, final @NotNull ByteBuffer value) {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
@@ -89,6 +92,7 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public void remove(final @NotNull ByteBuffer key) {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
@@ -102,6 +106,7 @@ public class MemTablesPool implements Table, Closeable {
         enqueueFlush();
     }
 
+    @SuppressWarnings("LockNotBeforeTry")
     private void enqueueFlush() {
         if(currentMemTable.sizeInBytes() > flushLimit) {
             lock.writeLock().lock();
@@ -129,6 +134,7 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public long generation() {
         lock.readLock().lock();
         try {
@@ -158,6 +164,7 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public void close() {
         if(!stop.compareAndSet(false, true)) {
             return;
@@ -185,6 +192,7 @@ public class MemTablesPool implements Table, Closeable {
      * @param generation is the start of generation
      * @param base is the path
      */
+    @SuppressWarnings("LockNotBeforeTry")
     void compact(@NotNull final  Collection<FileTable> fileTables,
                         final long generation,final File base) throws IOException {
         lock.readLock().lock();

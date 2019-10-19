@@ -12,15 +12,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class MemTable implements Table {
     private final SortedMap<ByteBuffer, Value> map = new ConcurrentSkipListMap<>();
     private final SortedMap<ByteBuffer, Value> unmodifiable = Collections.unmodifiableSortedMap(map);
-    private final AtomicLong sizeInBytes = new AtomicLong();
+    private final AtomicLong sizeInByte = new AtomicLong();
     private final long generation ;
 
     MemTable(final long generation) {
         this.generation = generation;
     }
 
+    public long sizeInByte() {
+        return sizeInByte.get();
+    }
+
+    @Override
     public long sizeInBytes() {
-        return sizeInBytes.get();
+        return 0;
     }
 
     @NotNull
@@ -39,11 +44,11 @@ public final class MemTable implements Table {
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         final Value previous = map.put(key, Value.of(value));
         if (previous == null) {
-            sizeInBytes.addAndGet(key.remaining() + value.remaining()+ Long.BYTES);
+            sizeInByte.addAndGet(key.remaining() + value.remaining()+ Long.BYTES);
         } else if (previous.isRemoved()) {
-            sizeInBytes.addAndGet( value.remaining() + Long.BYTES);
+            sizeInByte.addAndGet( value.remaining() + Long.BYTES);
         } else {
-            sizeInBytes.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());
+            sizeInByte.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());
         }
     }
 
@@ -51,9 +56,9 @@ public final class MemTable implements Table {
     public void remove(@NotNull final ByteBuffer key) {
         final Value previous = map.put(key, Value.tombstone());
         if (previous == null) {
-            sizeInBytes.addAndGet(key.remaining());
+            sizeInByte.addAndGet(key.remaining());
         } else if (!previous.isRemoved()) {
-            sizeInBytes.addAndGet( - previous.getData().remaining());
+            sizeInByte.addAndGet( - previous.getData().remaining());
         }
     }
 

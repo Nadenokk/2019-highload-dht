@@ -1,6 +1,5 @@
 package ru.mail.polis.dao.nadenokk;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import com.google.common.collect.Iterators;
@@ -34,5 +33,11 @@ public final class IteratorsTool {
             assert cell != null;
             return !cell.getValue().isRemoved();
         });
+    }
+
+    public static byte[] toByteArray(@NotNull final ByteBuffer buffer) {
+        final byte[] blk = new byte[buffer.remaining()];
+        buffer.get(blk);
+        return blk;
     }
 }

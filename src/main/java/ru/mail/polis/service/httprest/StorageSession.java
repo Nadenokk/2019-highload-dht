@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.mail.polis.Record;
+import ru.mail.polis.dao.nadenokk.IteratorsTool;
 
 public class StorageSession extends HttpSession{
 
@@ -47,20 +48,14 @@ public class StorageSession extends HttpSession{
         next();
     }
 
-    private static byte[] toByteArray(@NotNull final ByteBuffer buffer) {
-        byte[] blk = new byte[buffer.remaining()];
-        buffer.get(blk);
-        return blk;
-    }
-
     private void next() throws IOException {
         if(data == null) {
             throw new IllegalStateException("");
         }
         while (data.hasNext() && queueHead == null) {
             final Record record = data.next();
-            final byte[] key = toByteArray(record.getKey().duplicate());
-            final byte[] value = toByteArray(record.getValue().duplicate());
+            final byte[] key = IteratorsTool.toByteArray(record.getKey().duplicate());
+            final byte[] value = IteratorsTool.toByteArray(record.getValue().duplicate());
 
             // <key>'\n'<value>
             final int payloadLength = key.length + DELIMITER.length + value.length;

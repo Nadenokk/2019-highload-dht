@@ -91,25 +91,20 @@ public final class HttpRestDemon extends HttpServer implements Service {
             return;
         }
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        createResponse(request, key, session);
-    }
-
-    private void createResponse(@NotNull final Request request,
-                                @NotNull final ByteBuffer key, final HttpSession session) {
-            final var method = request.getMethod();
-            switch (method) {
-                case Request.METHOD_GET:
-                        asyncExecute(session, () -> get(key));
-                    break;
-                case Request.METHOD_PUT:
-                        asyncExecute(session, () -> upset(key, request.getBody()));
-                    break;
-                case Request.METHOD_DELETE:
-                        asyncExecute(session, () -> delete(key));
-                    break;
-                default:
-                    asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
-            }
+        final var method = request.getMethod();
+        switch (method) {
+            case Request.METHOD_GET:
+                asyncExecute(session, () -> get(key));
+                break;
+            case Request.METHOD_PUT:
+                asyncExecute(session, () -> upset(key, request.getBody()));
+                break;
+            case Request.METHOD_DELETE:
+                asyncExecute(session, () -> delete(key));
+                break;
+            default:
+                asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
+        }
     }
 
     private Response get(

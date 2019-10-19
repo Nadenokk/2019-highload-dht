@@ -73,7 +73,7 @@ public class StorageSession extends HttpSession{
             }
         }
     }
-    
+
     private void builderChunk(@NotNull final Record record) throws IOException {
 
         final byte[] key = IteratorsTool.toByteArray(record.getKey().duplicate());

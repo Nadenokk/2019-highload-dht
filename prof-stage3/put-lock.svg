@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" width="1200" height="86" onload="init(evt)" viewBox="0 0 1200 86" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg version="1.1" width="1200" height="374" onload="init(evt)" viewBox="0 0 1200 374" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <style type="text/css">
 	text { font-family:Verdana; font-size:12px; fill:rgb(0,0,0); }
 	#search { opacity:0.1; cursor:pointer; }
@@ -328,10 +328,110 @@
 </script>
 <rect x="0" y="0" width="100%" height="100%" fill="rgb(240,240,220)"/>
 <text id="title" x="600" y="24">Flame Graph</text>
-<text id="details" x="10" y="69"> </text>
+<text id="details" x="10" y="357"> </text>
 <text id="unzoom" x="10" y="24" class="hide">Reset Zoom</text>
 <text id="search" x="1090" y="24">Search</text>
-<text id="matched" x="1090" y="69"> </text>
+<text id="matched" x="1090" y="357"> </text>
 <g id="frames">
+<g>
+<title>all (96 samples, 100.00%)</title><rect x="10.0" y="323.0" width="1180.0" height="15" fill="#f17070" rx="2" ry="2"/>
+<text x="13.0" y="334.0">all</text>
+</g>
+<g>
+<title>java/lang/Thread.run (85 samples, 88.54%)</title><rect x="10.0" y="307.0" width="1044.8" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="13.0" y="318.0">java/lang/Thread.run</text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor$Worker.run (85 samples, 88.54%)</title><rect x="10.0" y="291.0" width="1044.8" height="15" fill="#65f665" rx="2" ry="2"/>
+<text x="13.0" y="302.0">java/util/concurrent/ThreadPoolExecutor$Worker.run</text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor.runWorker (85 samples, 88.54%)</title><rect x="10.0" y="275.0" width="1044.8" height="15" fill="#6cfd6c" rx="2" ry="2"/>
+<text x="13.0" y="286.0">java/util/concurrent/ThreadPoolExecutor.runWorker</text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon$$Lambda$65/593464534.run (85 samples, 88.54%)</title><rect x="10.0" y="259.0" width="1044.8" height="15" fill="#6bfc6b" rx="2" ry="2"/>
+<text x="13.0" y="270.0">ru/mail/polis/service/httprest/HttpRestDemon$$Lambda$65/593464534.run</text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon.lambda$asyncExecute$4 (85 samples, 88.54%)</title><rect x="10.0" y="243.0" width="1044.8" height="15" fill="#55e655" rx="2" ry="2"/>
+<text x="13.0" y="254.0">ru/mail/polis/service/httprest/HttpRestDemon.lambda$asyncExecute$4</text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon$$Lambda$90/865761319.submit (1 samples, 1.04%)</title><rect x="10.0" y="227.0" width="12.3" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="13.0" y="238.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon.lambda$createResponse$1 (1 samples, 1.04%)</title><rect x="10.0" y="211.0" width="12.3" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="13.0" y="222.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon.upset (1 samples, 1.04%)</title><rect x="10.0" y="195.0" width="12.3" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="13.0" y="206.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/dao/nadenokk/LSMDao.upsert (1 samples, 1.04%)</title><rect x="10.0" y="179.0" width="12.3" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="13.0" y="190.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/dao/nadenokk/MemTablesPool.upsert (1 samples, 1.04%)</title><rect x="10.0" y="163.0" width="12.3" height="15" fill="#54e554" rx="2" ry="2"/>
+<text x="13.0" y="174.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/dao/nadenokk/MemTablesPool.enqueueFlush (1 samples, 1.04%)</title><rect x="10.0" y="147.0" width="12.3" height="15" fill="#5eef5e" rx="2" ry="2"/>
+<text x="13.0" y="158.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/ReentrantReadWriteLock$WriteLock.lock (1 samples, 1.04%)</title><rect x="10.0" y="131.0" width="12.3" height="15" fill="#62f362" rx="2" ry="2"/>
+<text x="13.0" y="142.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquire (1 samples, 1.04%)</title><rect x="10.0" y="115.0" width="12.3" height="15" fill="#6afb6a" rx="2" ry="2"/>
+<text x="13.0" y="126.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.acquireQueued (1 samples, 1.04%)</title><rect x="10.0" y="99.0" width="12.3" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="13.0" y="110.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/AbstractQueuedSynchronizer.parkAndCheckInterrupt (1 samples, 1.04%)</title><rect x="10.0" y="83.0" width="12.3" height="15" fill="#69fa69" rx="2" ry="2"/>
+<text x="13.0" y="94.0"></text>
+</g>
+<g>
+<title>java/util/concurrent/locks/LockSupport.park (1 samples, 1.04%)</title><rect x="10.0" y="67.0" width="12.3" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="13.0" y="78.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.park (1 samples, 1.04%)</title><rect x="10.0" y="51.0" width="12.3" height="15" fill="#52e352" rx="2" ry="2"/>
+<text x="13.0" y="62.0"></text>
+</g>
+<g>
+<title>java.util.concurrent.locks.ReentrantReadWriteLock$NonfairSync (1 samples, 1.04%)</title><rect x="10.0" y="35.0" width="12.3" height="15" fill="#5bc9c9" rx="2" ry="2"/>
+<text x="13.0" y="46.0"></text>
+</g>
+<g>
+<title>ru/mail/polis/service/httprest/HttpRestDemon$ResponseUtils.sendResponse (84 samples, 87.50%)</title><rect x="22.3" y="227.0" width="1032.5" height="15" fill="#63f463" rx="2" ry="2"/>
+<text x="25.3" y="238.0">ru/mail/polis/service/httprest/HttpRestDemon$ResponseUtils.sendResponse</text>
+</g>
+<g>
+<title>one/nio/http/HttpSession.sendResponse (84 samples, 87.50%)</title><rect x="22.3" y="211.0" width="1032.5" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="25.3" y="222.0">one/nio/http/HttpSession.sendResponse</text>
+</g>
+<g>
+<title>ru.mail.polis.service.httprest.StorageSession (84 samples, 87.50%)</title><rect x="22.3" y="195.0" width="1032.5" height="15" fill="#6ddbdb" rx="2" ry="2"/>
+<text x="25.3" y="206.0">ru.mail.polis.service.httprest.StorageSession</text>
+</g>
+<g>
+<title>one/nio/server/SelectorThread.run (11 samples, 11.46%)</title><rect x="1054.8" y="307.0" width="135.2" height="15" fill="#67f867" rx="2" ry="2"/>
+<text x="1057.8" y="318.0">one/nio/server/Se..</text>
+</g>
+<g>
+<title>one/nio/net/Session.process (11 samples, 11.46%)</title><rect x="1054.8" y="291.0" width="135.2" height="15" fill="#5eef5e" rx="2" ry="2"/>
+<text x="1057.8" y="302.0">one/nio/net/Sessi..</text>
+</g>
+<g>
+<title>ru.mail.polis.service.httprest.StorageSession (11 samples, 11.46%)</title><rect x="1054.8" y="275.0" width="135.2" height="15" fill="#5ac8c8" rx="2" ry="2"/>
+<text x="1057.8" y="286.0">ru.mail.polis.ser..</text>
+</g>
 </g>
 </svg>

@@ -99,23 +99,18 @@ public final class HttpRestDemon extends HttpServer implements Service {
             final var method = request.getMethod();
             switch (method) {
                 case Request.METHOD_GET:
-                    try {
                         asyncExecute(session, () -> get(key));
-                    }  catch (NoSuchElementException e) { }
-                    break;
+                    return;
                 case Request.METHOD_PUT:
-                    try {
                         asyncExecute(session, () -> upset(key, request.getBody()));
-                    }catch (NoSuchElementException e) { }
-                    break;
+                    return;
                 case Request.METHOD_DELETE:
-                    try {
                         asyncExecute(session, () -> delete(key));
-                    }catch (NoSuchElementException e) { }
-                    break;
+                    return;
                 default:
                     asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
             }
+            asyncExecute(session, () -> new Response(Response.NOT_FOUND, "Key not found".getBytes(StandardCharsets.UTF_8)));
     }
 
     private Response get(

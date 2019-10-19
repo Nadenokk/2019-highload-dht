@@ -54,7 +54,7 @@ public class StorageSession extends HttpSession{
         }
         while (data.hasNext() && queueHead == null) {
             final Record record = data.next();
-            BuilderChunk(record);
+            builderChunk(record);
         }
 
         if(!data.hasNext()) {
@@ -73,7 +73,7 @@ public class StorageSession extends HttpSession{
             }
         }
     }
-    private void BuilderChunk (@NotNull Record record) throws IOException {
+    private void builderChunk(@NotNull final Record record) throws IOException {
 
         final byte[] key = IteratorsTool.toByteArray(record.getKey().duplicate());
         final byte[] value = IteratorsTool.toByteArray(record.getValue().duplicate());
@@ -97,4 +97,3 @@ public class StorageSession extends HttpSession{
         write(chunk, 0, chunk.length);
     }
 }
-

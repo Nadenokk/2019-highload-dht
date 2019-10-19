@@ -36,7 +36,7 @@ public final class IteratorsTool {
     }
 
     /**
-    @param buffer ByteBuffer to convert
+     * @param buffer ByteBuffer to convert
      **/
     public static byte[] toByteArray(@NotNull final ByteBuffer buffer) {
         final byte[] blk = new byte[buffer.remaining()];

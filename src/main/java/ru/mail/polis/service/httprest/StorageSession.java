@@ -48,9 +48,9 @@ public class StorageSession extends HttpSession{
     }
 
     private static byte[] toByteArray(@NotNull final ByteBuffer buffer) {
-        final byte[] b = new byte[buffer.remaining()];
-        buffer.get(b);
-        return b;
+        byte[] blk = new byte[buffer.remaining()];
+        buffer.get(blk);
+        return blk;
     }
 
     private void next() throws IOException {

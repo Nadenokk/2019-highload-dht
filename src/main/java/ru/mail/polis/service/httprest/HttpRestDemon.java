@@ -55,7 +55,11 @@ public final class HttpRestDemon extends HttpServer implements Service {
     public void entities(@Param("start") final String start,
                          @Param("end") final String end, @NotNull final Request request,
                          @NotNull final HttpSession session) {
-        if ((start == null || start.isEmpty()) || (end != null && end.isEmpty())) {
+        if (end != null && end.isEmpty()){
+            ResponseUtils.sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
+            return;
+        }
+        if (start == null || start.isEmpty()){
             ResponseUtils.sendResponse(session, new Response(Response.BAD_REQUEST, Response.EMPTY));
             return;
         }
@@ -82,31 +86,34 @@ public final class HttpRestDemon extends HttpServer implements Service {
     @Path("/v0/entity")
     public void entity(@Param("id") final String id, final Request request, final HttpSession session) {
         if (id == null || id.isEmpty()) {
-            ResponseUtils.sendResponse(session, new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8)));
+            ResponseUtils.sendResponse(session,
+                    new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8)));
             return;
         }
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         createResponse(request, key, session);
     }
 
-    private void createResponse(@NotNull final Request request, @NotNull final ByteBuffer key, final HttpSession session) {
+    private void createResponse(@NotNull final Request request,
+                                @NotNull final ByteBuffer key, final HttpSession session) {
         try {
             final var method = request.getMethod();
             switch (method) {
                 case Request.METHOD_GET:
                     asyncExecute(session, () -> get(key));
-                    return;
+                    break;
                 case Request.METHOD_PUT:
                     asyncExecute(session, () -> upset(key, request.getBody()));
-                    return;
+                    break;
                 case Request.METHOD_DELETE:
                     asyncExecute(session, () -> delete(key));
-                    return;
+                    break;
                 default:
                     asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
             }
         } catch (NoSuchElementException e) {
-            asyncExecute(session, () -> new Response(Response.NOT_FOUND, "Key not found".getBytes(StandardCharsets.UTF_8)));
+            asyncExecute(session, () -> new Response(Response.NOT_FOUND,
+                    "Key not found".getBytes(StandardCharsets.UTF_8)));
         }
     }
 

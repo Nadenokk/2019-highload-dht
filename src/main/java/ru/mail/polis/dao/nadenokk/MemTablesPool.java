@@ -6,16 +6,18 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.Iterator;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.NavigableMap;
-import java.util.ArrayList;
+
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.Iters;
@@ -49,7 +51,11 @@ public class MemTablesPool implements Table, Closeable {
     public long sizeInBytes() {
         lock.readLock().lock();
         try {
-            return currentMemTable.sizeInBytes();
+            long size = currentMemTable.sizeInBytes();
+            for (final Map.Entry<Long,Table> table : pendingToFlushTables.entrySet()){
+                size += table.getValue().sizeInBytes();
+            }
+            return  size;
         }finally {
            lock.readLock().unlock();
         }
@@ -57,10 +63,9 @@ public class MemTablesPool implements Table, Closeable {
 
     @NotNull
     @Override
-    @SuppressWarnings("LockNotBeforeTry")
     public Iterator<Cell> iterator(final @NotNull ByteBuffer from) {
-        lock.readLock().lock();
         final Collection<Iterator<Cell>> iterators;
+        lock.readLock().lock();
         try {
 
             iterators = new ArrayList<>(pendingToFlushTables.size() + 1);
@@ -71,19 +76,17 @@ public class MemTablesPool implements Table, Closeable {
         } finally {
             lock.readLock().unlock();
         }
-
         final Iterator<Cell> mergeIterator = Iterators.mergeSorted(iterators, Cell.COMPARATOR);
         return Iters.collapseEquals(mergeIterator, Cell::getKey);
     }
 
     @Override
-    @SuppressWarnings("LockNotBeforeTry")
     public void upsert(final @NotNull ByteBuffer key, final @NotNull ByteBuffer value) {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
+        lock.readLock().lock();
         try {
-            lock.readLock().lock();
             currentMemTable.upsert(key, value);
         } finally {
             lock.readLock().unlock();
@@ -92,13 +95,12 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
-    @SuppressWarnings("LockNotBeforeTry")
     public void remove(final @NotNull ByteBuffer key) {
         if(stop.get()) {
             throw new IllegalStateException("Already stopped!");
         }
+        lock.readLock().lock();
         try {
-            lock.readLock().lock();
             currentMemTable.remove(key);
         } finally {
             lock.readLock().unlock();
@@ -106,11 +108,10 @@ public class MemTablesPool implements Table, Closeable {
         enqueueFlush();
     }
 
-    @SuppressWarnings("LockNotBeforeTry")
     private void enqueueFlush() {
         if(currentMemTable.sizeInBytes() > flushLimit) {
-            lock.writeLock().lock();
             FlushTable flushTable = null;
+            lock.writeLock().lock();
             try {
 
                 if (currentMemTable.sizeInBytes() > flushLimit) {
@@ -134,7 +135,6 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
-    @SuppressWarnings("LockNotBeforeTry")
     public long generation() {
         lock.readLock().lock();
         try {
@@ -164,13 +164,12 @@ public class MemTablesPool implements Table, Closeable {
     }
 
     @Override
-    @SuppressWarnings("LockNotBeforeTry")
     public void close() {
         if(!stop.compareAndSet(false, true)) {
             return;
         }
-        lock.writeLock().lock();
         FlushTable flushTable;
+        lock.writeLock().lock();
         try {
             flushTable = new FlushTable(generation, currentMemTable.iterator(LSMDao.nullBuffer),
                     true, false);
@@ -192,19 +191,18 @@ public class MemTablesPool implements Table, Closeable {
      * @param generation is the start of generation
      * @param base is the path
      */
-    @SuppressWarnings("LockNotBeforeTry")
     void compact(@NotNull final  Collection<FileTable> fileTables,
                         final long generation,final File base) throws IOException {
-        lock.readLock().lock();
         final Iterator<Cell> alive ;
+        lock.readLock().lock();
         try {
             alive = IteratorsTool.data(currentMemTable,fileTables,LSMDao.nullBuffer);
         } finally {
             lock.readLock().unlock();
         }
         final File tmp = new File(base, generation + LSMDao.TABLE + LSMDao.TEMP);
-        lock.readLock().lock();
         FileTable.writeTable(alive, tmp);
+        lock.readLock().lock();
         try {
             for (final FileTable fileTable : fileTables) {
                 Files.delete(fileTable.getPath());

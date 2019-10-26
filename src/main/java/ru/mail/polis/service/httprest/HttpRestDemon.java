@@ -181,6 +181,11 @@ public final class HttpRestDemon extends HttpServer implements Service {
                 ResponseUtils.sendResponse(session, publisher.submit());
             } catch (IOException e) {
                 log.error("Unable to create response", e);
+                try {
+                    session.sendError(Response.INTERNAL_ERROR, "Error while send response");
+                } catch (IOException ioException) {
+                    log.error("Error while send response {}", ioException.getMessage());
+                }
             } catch (NoSuchElementException e) {
                 try {
                     session.sendError(Response.NOT_FOUND, "Not found recourse!");

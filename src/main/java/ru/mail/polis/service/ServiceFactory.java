@@ -21,8 +21,10 @@ import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.service.httprest.HttpRestDemon;
+import ru.mail.polis.service.httprest.Balancer;
 
 import ru.mail.polis.dao.DAO;
+import ru.mail.polis.service.httprest.Topology;
 
 /**
  * Constructs {@link Service} instances.
@@ -57,6 +59,9 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        return new HttpRestDemon(port, dao);
+        final Topology<String>  nodes = new Balancer(topology,"http://localhost:" + port);
+
+
+        return new HttpRestDemon(port, dao, nodes);
     }
 }

@@ -1,12 +1,14 @@
 package ru.mail.polis.service.httprest;
 
 import one.nio.http.HttpServer;
+import one.nio.http.HttpClient;
 import one.nio.http.HttpServerConfig;
 import one.nio.http.HttpSession;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import one.nio.http.Path;
 import one.nio.http.Param;
+import one.nio.net.ConnectionString;
 import one.nio.net.Socket;
 import one.nio.server.AcceptorConfig;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +23,38 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
+
+import one.nio.http.HttpException;
+import one.nio.pool.PoolException;
+
 
 public final class HttpRestDemon extends HttpServer implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
 
+    private final Topology<String> topology;
+    private final Map<String, HttpClient> pools;
+
     private final DAO dao;
 
-    public HttpRestDemon(final int port, @NotNull final DAO dao) throws IOException {
+    public HttpRestDemon(final int port, @NotNull final DAO dao,
+                         @NotNull final Topology<String> topology) throws IOException {
         super(createService(port));
         this.dao = dao;
+        this.topology = topology;
+
+        this.pools = new HashMap<>();
+        for (final String host : topology.all()) {
+            if (topology.isMe(host)) {
+                log.info("We process int host : {}", host);
+                continue;
+            }
+            log.info("We have next host in the pool : {}", host);
+            assert !pools.containsKey(host);
+            pools.put(host, new HttpClient(new ConnectionString(host + "?timeout=100")));
+        }
     }
 
     /**
@@ -90,9 +114,28 @@ public final class HttpRestDemon extends HttpServer implements Service {
                     new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8)));
             return;
         }
+
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
+        final String node = topology.primaryFor(key);
+
+        if (!topology.isMe(node)) {
+            log.debug("print proxy:"+node+" "+topology.isMe(node)+" "+request);
+            asyncExecute(session, () -> proxy(node, request));
+            return;
+        }
+        log.debug("print locol:"+node+" "+topology.isMe(node)+" "+request);
         createResponse(request, key, session);
     }
+
+    private Response proxy(@NotNull final String node, @NotNull final Request request) throws IOException {
+        assert !topology.isMe(node);
+        try {
+            return pools.get(node).invoke(request);
+        } catch (InterruptedException | PoolException | HttpException e) {
+            throw new IOException("Can't proxy", e);
+        }
+    }
+
 
     private void createResponse(@NotNull final Request request,
                                 @NotNull final ByteBuffer key, final HttpSession session) {

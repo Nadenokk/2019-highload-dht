@@ -29,7 +29,6 @@ import java.util.HashMap;
 import one.nio.http.HttpException;
 import one.nio.pool.PoolException;
 
-
 public final class HttpRestDemon extends HttpServer implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
@@ -39,6 +38,14 @@ public final class HttpRestDemon extends HttpServer implements Service {
 
     private final DAO dao;
 
+    /**
+     * Async service.
+     *
+     * @param port     number of a port.
+     * @param dao      LSMDao.
+     * @param topology is pool of workers
+     * @throws IOException throw exception.
+     */
     public HttpRestDemon(final int port, @NotNull final DAO dao,
                          @NotNull final Topology<String> topology) throws IOException {
         super(createService(port));
@@ -65,7 +72,6 @@ public final class HttpRestDemon extends HttpServer implements Service {
     public Response status() {
         return Response.ok("OK");
     }
-
 
     /**
      * Rest-endpoint with this uri.
@@ -136,7 +142,6 @@ public final class HttpRestDemon extends HttpServer implements Service {
         }
     }
 
-
     private void createResponse(@NotNull final Request request,
                                 @NotNull final ByteBuffer key, final HttpSession session) {
             final var method = request.getMethod();
@@ -173,7 +178,6 @@ public final class HttpRestDemon extends HttpServer implements Service {
         dao.remove(key);
         return new Response(Response.ACCEPTED, Response.EMPTY);
     }
-
 
     private void asyncExecute(@NotNull final HttpSession session, @NotNull final ResponsePublisher publisher) {
         asyncExecute(() -> {

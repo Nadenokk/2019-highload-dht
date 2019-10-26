@@ -59,8 +59,7 @@ public final class ServiceFactory {
             throw new IllegalArgumentException("Port out of range");
         }
 
-        final Topology<String>  nodes = new Balancer(topology,"http://localhost:" + port);
-
+        final Topology<String> nodes = new Balancer(topology,"http://localhost:" + port);
 
         return new HttpRestDemon(port, dao, nodes);
     }

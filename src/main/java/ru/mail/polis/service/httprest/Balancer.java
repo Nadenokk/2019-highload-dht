@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.Arrays;
 import com.google.common.hash.Hashing;
 
-public class Balancer implements Topology<String>{
+public class Balancer implements Topology<String> {
 
     private final String[] servers;
     private final String me;

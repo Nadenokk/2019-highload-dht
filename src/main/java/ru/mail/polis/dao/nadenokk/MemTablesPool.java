@@ -55,7 +55,7 @@ public class MemTablesPool implements Table, Closeable {
             for (final Map.Entry<Long,Table> table : pendingToFlushTables.entrySet()){
                 size += table.getValue().sizeInBytes();
             }
-            return  size;
+            return size;
         }finally {
            lock.readLock().unlock();
         }
@@ -191,7 +191,7 @@ public class MemTablesPool implements Table, Closeable {
      * @param generation is the start of generation
      * @param base is the path
      */
-    void compact(@NotNull final  Collection<FileTable> fileTables,
+    void compact(@NotNull final Collection<FileTable> fileTables,
                         final long generation,final File base) throws IOException {
         final Iterator<Cell> alive ;
         lock.readLock().lock();

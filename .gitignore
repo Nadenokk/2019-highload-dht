@@ -15,6 +15,7 @@
 !.codeclimate.yml
 !gradle/*
 !prof-stage3/*
+!prof-stage4/*
 
 
 # ...even if they are in subdirectories

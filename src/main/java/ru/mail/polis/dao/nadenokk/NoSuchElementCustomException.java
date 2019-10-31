@@ -4,13 +4,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.NoSuchElementException;
 
 @SuppressWarnings("serial")
-public class NoSuchElementExceptionCustom extends NoSuchElementException {
+public class NoSuchElementCustomException extends NoSuchElementException {
 
     /** Custom lite extends NoSuchElement.
      *
      * @param mess message with problem cause
      */
-    public NoSuchElementExceptionCustom(@NotNull final String mess){
+    public NoSuchElementCustomException(@NotNull final String mess){
         super(mess);
     }
 

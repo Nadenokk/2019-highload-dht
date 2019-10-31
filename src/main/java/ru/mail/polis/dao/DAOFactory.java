@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DAOFactory {
     static final long MAX_HEAP = 256 * 1024 * 1024;
+    static final long FLASH_SIZE = MAX_HEAP / 64;
 
     private DAOFactory() {
         // Not instantiatable
@@ -54,6 +55,6 @@ public final class DAOFactory {
             throw new IllegalArgumentException("Path is not a directory: " + data);
         }
 
-        return new LSMDao(data, MAX_HEAP / 128);
+        return new LSMDao(data, FLASH_SIZE);
     }
 }

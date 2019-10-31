@@ -24,7 +24,13 @@ public final class FileTable implements Table {
     private final Path path;
     private final long currentGeneration;
 
-    FileTable(final File file, final long currentGeneration) throws IOException {
+    /**
+     * File mapping from disk.
+     *
+     * @param file is the file from which we read data
+     *
+     */
+    public FileTable(final File file, final long currentGeneration) throws IOException {
         final int sizeFile = (int) file.length();
         this.path = file.toPath();
         this.sizeFileInByte = sizeFile;
@@ -55,13 +61,13 @@ public final class FileTable implements Table {
     public long sizeInBytes() {
         return sizeFileInByte;
     }
+
     /**
      * Writes MemTable data to disk.
      *
      * @param cells iterator of MemTable
      * @param file    path of the file where data needs to be written
      */
-
     static void writeTable(final Iterator<Cell> cells, final File file) {
         final List<Integer> offsets = new ArrayList<>();
         try (FileChannel fc = FileChannel.open(file.toPath(),

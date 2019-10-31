@@ -211,7 +211,7 @@ public class MemTablesPool implements Table, Closeable {
             final File file = new File(base, generation + LSMDao.TABLE + LSMDao.SUFFIX);
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
             fileTables.add(new FileTable(file, generation));
-        }finally {
+        } finally {
             lock.readLock().unlock();
         }
     }

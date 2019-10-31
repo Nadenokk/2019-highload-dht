@@ -10,7 +10,6 @@ import java.util.Iterator;
 
 public final class IteratorsTool {
     private IteratorsTool(){
-
     }
 
     /**

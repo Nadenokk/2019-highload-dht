@@ -130,15 +130,13 @@ public final class LSMDao implements DAO {
                     final long currentGeneration = flushTable.getGeneration();
                     poisonReceived = flushTable.isPoisonPills();
                     final boolean isCompactTable = flushTable.isCompactionTable();
-                    if(isCompactTable || poisonReceived) {
-                        flush(currentGeneration,true,data);
-                    } else {
-                        flush(currentGeneration,false,data);
-                    }
+                    boolean condition = isCompactTable || poisonReceived;
+                    flush(currentGeneration, condition, data);
                     if(!isCompactTable) {
                         memTable.flushed(currentGeneration);
                     }
                 } catch (InterruptedException e) {
+                    LOG.error("Exception {} ", e.getMessage());
                     Thread.currentThread().interrupt();
                 } catch (IOException e) {
                     LOG.error("I/O error ", e);

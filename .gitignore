@@ -7,13 +7,11 @@
 !README.md
 !LICENSE
 !gradlew.bat
-!gradlew
 !build.gradle.kts
 !.travis.yml
 !settings.gradle
 !checkstyle.xml
 !.codeclimate.yml
-!gradle/*
 !prof-stage3/*
 !prof-stage4/*
 

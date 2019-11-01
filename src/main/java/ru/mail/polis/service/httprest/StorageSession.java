@@ -68,7 +68,7 @@ public class StorageSession extends HttpSession{
                     try {
                         server.handleRequest(handling, this);
                     } catch (IOException e) {
-                        log.error("EROR {} ", e.getMessage());
+                        log.error("Can't handle request.",e);
                     }
                 }
             }

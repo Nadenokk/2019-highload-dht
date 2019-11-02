@@ -12,7 +12,7 @@ import ru.mail.polis.dao.nadenokk.Value;
 public final class ResponseTools {
 
     private static final String TIMESTAMP_HEADER = "X-OK-Timestamp";
-    
+
     private ResponseTools(){ }
 
     /**

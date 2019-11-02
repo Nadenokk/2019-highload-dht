@@ -60,7 +60,7 @@ class HttpController {
         for (final String node : poolsNodes) {
             Response response;
             if (topology.isMe(node)) {
-                Value value = ResponseTools.value(key, cell);
+                final Value value = ResponseTools.value(key, cell);
                 responses.add(value);
                 asks++;
             } else {
@@ -71,13 +71,14 @@ class HttpController {
                     final Value val = ResponseTools.getDataFromResponse(response);
                     responses.add(val);
                 } catch (HttpException | PoolException | InterruptedException e) {
-                    log.info("Can not wait answer from client {} in host {}", e.getLocalizedMessage(), node);
+                    log.info("Can not wait answer from client {} in host {} for Get",
+                            e.getLocalizedMessage(), node);
                 }
             }
 
         }
         if (asks >= rf.ask) {
-            Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
+            final Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
                     .max(Comparator.comparingLong(Value::getTimeStamp)).orElseGet(Value::absent);
             return ResponseTools.createResponse(value, false);
         } else {
@@ -112,7 +113,8 @@ class HttpController {
                         asks++;
                     }
                 } catch (HttpException | PoolException | InterruptedException e) {
-                    log.info("Can not wait answer from client {} in host {}", e.getLocalizedMessage(), node);
+                    log.info("Can not wait answer from client {} in host {} for UpSet",
+                            e.getLocalizedMessage(), node);
                 }
             }
         }
@@ -149,7 +151,8 @@ class HttpController {
                         asks++;
                     }
                 } catch (HttpException | PoolException | InterruptedException e) {
-                    log.info("Can not wait answer from client {} in host {}", e.getLocalizedMessage(), node);
+                    log.info("Can not wait answer from client {} in host {} for Dell",
+                            e.getLocalizedMessage(), node);
                 }
             }
         }

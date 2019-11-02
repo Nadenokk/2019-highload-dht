@@ -16,7 +16,6 @@ import ru.mail.polis.dao.DAO;
 import ru.mail.polis.service.Service;
 import ru.mail.polis.Record;
 import ru.mail.polis.service.httprest.utils.RF;
-import ru.mail.polis.service.httprest.utils.SendResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -31,7 +30,6 @@ public final class HttpRestDemon extends HttpServer implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
 
-    private final Map<String, HttpClient> pools;
     private final DAO dao;
     private final HttpController httpController;
     private final int nodesSize;
@@ -48,8 +46,8 @@ public final class HttpRestDemon extends HttpServer implements Service {
                          @NotNull final Topology<String> topology) throws IOException {
         super(createService(port));
         this.dao = dao;
-        this.pools = new HashMap<>();
 
+        final Map<String, HttpClient> pools = new HashMap<>();
         for (final String host : topology.all()) {
             if (topology.isMe(host)) {
                 log.info("We process int host : {}", host);
@@ -131,7 +129,7 @@ public final class HttpRestDemon extends HttpServer implements Service {
                 throw new IllegalArgumentException("Replicas is BAD!");
             }
         } catch (IllegalArgumentException e) {
-            SendResponse.sendResponse(session, new Response(Response
+            ResponseUtils.sendResponse(session, new Response(Response
                     .BAD_REQUEST, "Replicas is BAD".getBytes(StandardCharsets.UTF_8)));
             return;
         }
@@ -200,6 +198,7 @@ public final class HttpRestDemon extends HttpServer implements Service {
     }
 
     private static final class ResponseUtils {
+
         private ResponseUtils() {
         }
 

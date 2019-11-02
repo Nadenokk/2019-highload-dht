@@ -10,7 +10,8 @@ public class RF {
     public final int from;
 
     /**
-     * Replicas entity ask and form
+     * Replicas entity ask and form.
+     *
      * @param ask is parameters ask
      * @param from is parameters from
      */
@@ -19,16 +20,21 @@ public class RF {
         this.from = from;
     }
 
+    /**
+     * RF entity ask and form.
+     *
+     * @param value is parameters replicas
+     * @param nodesSize is parameters size of Nodes
+     */
     @NotNull
     public static RF of( final String value,@NotNull final int nodesSize ) {
-        if (value != null) {
-            final List<String> values = Splitter.on('/').splitToList(value);
-            if (values.size() != 2) {
-                throw new IllegalArgumentException("Wrong replica factor:" + value);
-            }
-            return new RF(Integer.parseInt(values.get(0)), Integer.parseInt(values.get(1)));
-        } else {
+        if (value == null) {
             return new RF(nodesSize/2 +1,nodesSize );
         }
+        final List<String> values = Splitter.on('/').splitToList(value);
+        if (values.size() != 2) {
+            throw new IllegalArgumentException("Wrong replica factor:" + value);
+        }
+        return new RF(Integer.parseInt(values.get(0)), Integer.parseInt(values.get(1)));
     }
 }

@@ -17,6 +17,7 @@ public class ResponseTools {
 
     /**
      * Get Value from response.
+     *
      * @param response response from witch we should be get value.
      */
     @NotNull

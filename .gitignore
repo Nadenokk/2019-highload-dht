@@ -15,7 +15,7 @@
 !.codeclimate.yml
 !prof-stage3/*
 !prof-stage4/*
-
+!prof-stage5/*
 
 # ...even if they are in subdirectories
 !*/

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.mail.polis.Record;
 import ru.mail.polis.dao.nadenokk.NoSuchElementCustomException;
+import ru.mail.polis.dao.nadenokk.Cell;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -104,4 +105,6 @@ public interface DAO extends Closeable {
     default void compact() throws IOException {
         // Implement me when you get to stage 3
     }
+
+    Iterator<Cell> lastIterator(@NotNull final ByteBuffer key);
 }

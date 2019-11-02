@@ -19,10 +19,6 @@ public final class MemTable implements Table {
         this.generation = generation;
     }
 
-    public long sizeInByte() {
-        return tableSizeInByte.get();
-    }
-
    @Override
     public long sizeInBytes() {
         return tableSizeInByte.get();
@@ -36,8 +32,7 @@ public final class MemTable implements Table {
                 input -> {
                     assert input != null;
                     return Cell.of(input.getKey(), input.getValue(), generation);
-                }
-                    );
+                });
     }
 
     @Override
@@ -45,8 +40,8 @@ public final class MemTable implements Table {
         final Value previous = map.put(key, Value.of(value));
         if (previous == null) {
             tableSizeInByte.addAndGet(key.remaining() + value.remaining() + Long.BYTES);
-        } else if (previous.isRemoved()) {
-            tableSizeInByte.addAndGet( value.remaining() + Long.BYTES);
+        } else  if (previous.getState() == Value.State.REMOVED) {
+            tableSizeInByte.addAndGet(value.remaining() + Long.BYTES);
         } else {
             tableSizeInByte.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());
         }

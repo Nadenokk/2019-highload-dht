@@ -38,6 +38,7 @@ public final class LSMDao implements DAO {
      * @throws IOException if an I/O error occurred
      */
     public LSMDao(final File base, final long flushThreshold) throws IOException {
+
         assert flushThreshold >= 0L;
         this.base = base;
         this.fileTables = new ArrayList<>();
@@ -83,6 +84,7 @@ public final class LSMDao implements DAO {
     private void flush(final long currentGeneration,
                        final boolean isCompactFlush,
                        @NotNull final Iterator<Cell> iterator) throws IOException {
+
         if(iterator.hasNext()) {
             final File file = new File(base, currentGeneration + TABLE + SUFFIX);
             FileTable.writeTable(iterator, file);
@@ -111,6 +113,12 @@ public final class LSMDao implements DAO {
     public void compact() throws IOException {
         memTable.compact(fileTables,generation,base);
     }
+
+    @Override
+    public Iterator<Cell> lastIterator(@NotNull final ByteBuffer from) {
+        return IteratorsTool.lastIterator(memTable, fileTables, from);
+    }
+
 
     @NotNull
     private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) {

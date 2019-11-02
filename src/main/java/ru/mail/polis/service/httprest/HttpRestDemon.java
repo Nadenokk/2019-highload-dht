@@ -15,9 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.service.Service;
 import ru.mail.polis.Record;
+import ru.mail.polis.service.httprest.Utils.RF;
+import ru.mail.polis.service.httprest.Utils.SendResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -26,17 +27,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
 
-import one.nio.http.HttpException;
-import one.nio.pool.PoolException;
-
 public final class HttpRestDemon extends HttpServer implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);
 
-    private final Topology<String> topology;
     private final Map<String, HttpClient> pools;
-
     private final DAO dao;
+    private final HttpController httpController;
+    private final int nodesSize;
 
     /**
      * Async service.
@@ -50,9 +48,8 @@ public final class HttpRestDemon extends HttpServer implements Service {
                          @NotNull final Topology<String> topology) throws IOException {
         super(createService(port));
         this.dao = dao;
-        this.topology = topology;
-
         this.pools = new HashMap<>();
+
         for (final String host : topology.all()) {
             if (topology.isMe(host)) {
                 log.info("We process int host : {}", host);
@@ -62,6 +59,8 @@ public final class HttpRestDemon extends HttpServer implements Service {
             assert !pools.containsKey(host);
             pools.put(host, new HttpClient(new ConnectionString(host + "?timeout=100")));
         }
+        this.nodesSize = pools.size() +1 ;
+        this.httpController = new HttpController(dao, pools, topology);
     }
 
     /**
@@ -110,73 +109,47 @@ public final class HttpRestDemon extends HttpServer implements Service {
      * Receives a request to an entity and respond depending on the method.
      *
      * @param id      Entity id
+     * @param replicas Entity ask and form
      * @param session is current session
      * @param request is request on this uri
      */
     @Path("/v0/entity")
-    public void entity(@Param("id") final String id, final Request request, final HttpSession session) {
+    public void entity(@Param("id") final String id,
+                       @Param("replicas") final String replicas,
+                       final Request request,
+                       final HttpSession session) {
         if (id == null || id.isEmpty()) {
             ResponseUtils.sendResponse(session,
                     new Response(Response.BAD_REQUEST, "Key is NULL".getBytes(StandardCharsets.UTF_8)));
             return;
         }
 
-        final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        final String node = topology.primaryFor(key);
-
-        if (!topology.isMe(node)) {
-            log.debug("print proxy:"+node+" "+topology.isMe(node)+" "+request);
-            asyncExecute(session, () -> proxy(node, request));
+        final RF rf ;
+        try {
+            rf = RF.of(replicas,nodesSize);
+            if(rf.ask < 1 || rf.from < rf.ask || rf.from > nodesSize) {
+                throw new IllegalArgumentException("Replicas is BAD!");
+            }
+        } catch (IllegalArgumentException e) {
+            SendResponse.sendResponse(session, new Response(Response.BAD_REQUEST, "Replicas is BAD".getBytes(StandardCharsets.UTF_8)));
             return;
         }
-        log.debug("print locol:"+node+" "+topology.isMe(node)+" "+request);
-        createResponse(request, key, session);
-    }
 
-    private Response proxy(@NotNull final String node, @NotNull final Request request) throws IOException {
-        assert !topology.isMe(node);
-        try {
-            return pools.get(node).invoke(request);
-        } catch (InterruptedException | PoolException | HttpException e) {
-            throw new IOException("Can't proxy", e);
+        final var method = request.getMethod();
+        switch (method) {
+            case Request.METHOD_GET:
+                asyncExecute(session, () -> httpController.get(id,rf,request));
+                break;
+            case Request.METHOD_PUT:
+                asyncExecute(session, () -> httpController.upset(id, rf,request));
+                break;
+            case Request.METHOD_DELETE:
+                asyncExecute(session, () -> httpController.delete(id,rf,request));
+                break;
+            default:
+                asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
+                break;
         }
-    }
-
-    private void createResponse(@NotNull final Request request,
-                                @NotNull final ByteBuffer key, final HttpSession session) {
-            final var method = request.getMethod();
-            switch (method) {
-                case Request.METHOD_GET:
-                        asyncExecute(session, () -> get(key));
-                    break;
-                case Request.METHOD_PUT:
-                        asyncExecute(session, () -> upset(key, request.getBody()));
-                    break;
-                case Request.METHOD_DELETE:
-                        asyncExecute(session, () -> delete(key));
-                    break;
-                default:
-                    asyncExecute(session, () -> new Response(Response.METHOD_NOT_ALLOWED, Response.EMPTY));
-                    break;
-            }
-    }
-
-    private Response get(
-            @NotNull final ByteBuffer key) throws IOException, NoSuchElementException {
-        final ByteBuffer value = dao.get(key).duplicate();
-        final byte[] response = new byte[value.duplicate().remaining()];
-        value.get(response);
-        return new Response(Response.OK, response);
-    }
-
-    private Response upset(@NotNull final ByteBuffer key, @NotNull final byte[] value) throws IOException {
-        dao.upsert(key, ByteBuffer.wrap(value));
-        return new Response(Response.CREATED, Response.EMPTY);
-    }
-
-    private Response delete(@NotNull final ByteBuffer key) throws IOException {
-        dao.remove(key);
-        return new Response(Response.ACCEPTED, Response.EMPTY);
     }
 
     private void asyncExecute(@NotNull final HttpSession session, @NotNull final ResponsePublisher publisher) {

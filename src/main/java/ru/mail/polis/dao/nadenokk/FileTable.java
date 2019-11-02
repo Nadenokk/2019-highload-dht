@@ -79,18 +79,21 @@ public final class FileTable implements Table {
                 final ByteBuffer key = cell.getKey();
                 final int keySize = cell.getKey().remaining();
                 final Value value = cell.getValue();
+
                 // Key
                 fc.write(fromInt(keySize));
                 fc.write(key);
                 offset += keySize +Integer.BYTES+ Long.BYTES;
+
                 // Timestamp
-                if (value.isRemoved()) {
+                if (value.getState() == Value.State.REMOVED) {
                     fc.write(fromLong(-cell.getValue().getTimeStamp()));
                 } else {
                     fc.write(fromLong(cell.getValue().getTimeStamp()));
                 }
+
                 // Value
-                if (!value.isRemoved()) {
+                if (value.getState() != Value.State.REMOVED) {
                     final ByteBuffer valueData = value.getData();
                     final int valueSize = value.getData().remaining();
                     fc.write(fromInt(valueSize));
@@ -98,10 +101,12 @@ public final class FileTable implements Table {
                     offset += Integer.BYTES + valueSize;
                 }
             }
+
             // Offsets
             for (final Integer anOffset : offsets) {
                 fc.write(fromInt(anOffset));
             }
+
             // Cells
             fc.write(fromInt(offsets.size()));
         } catch (IOException e){
@@ -133,7 +138,7 @@ public final class FileTable implements Table {
         final long timestamp = cells.getLong(offset);
         offset += Long.BYTES;
         if (timestamp < 0) {
-            return new Cell(key.slice(), new Value(-timestamp, null), currentGeneration);
+            return new Cell(key.slice(), new Value(-timestamp, null, Value.State.REMOVED), currentGeneration);
         } else {
             final int valueSize = cells.getInt(offset);
             offset += Integer.BYTES;
@@ -142,7 +147,8 @@ public final class FileTable implements Table {
             value.limit(value.position() + valueSize)
                     .position(offset)
                     .limit(offset + valueSize);
-            return new Cell(key.slice(), new Value(timestamp, value.slice()), currentGeneration);
+            return new Cell(key.slice(), new Value(timestamp, value.slice(),
+                    Value.State.PRESENT), currentGeneration);
         }
     }
 

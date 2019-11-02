@@ -9,14 +9,10 @@ import ru.mail.polis.dao.nadenokk.IteratorsTool;
 import ru.mail.polis.dao.nadenokk.Cell;
 import ru.mail.polis.dao.nadenokk.Value;
 
-public class ResponseTools {
+public final class ResponseTools {
 
     private static final String TIMESTAMP_HEADER = "X-OK-Timestamp";
-
-
-    /**
-     * 
-     */
+    
     private ResponseTools(){ }
 
     /**
@@ -78,9 +74,11 @@ public class ResponseTools {
     }
 
     /**
-     * Create  Response for RestServer
+     * Create  Response for RestServer.
+     *
      * @param value is value from storage
      * @param proxyStatus is status for proxy
+     * @return is return response
      */
     @NotNull
     public static Response createResponse(@NotNull final Value value,

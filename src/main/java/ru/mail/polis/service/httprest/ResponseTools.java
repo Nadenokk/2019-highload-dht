@@ -13,7 +13,11 @@ public class ResponseTools {
 
     private static final String TIMESTAMP_HEADER = "X-OK-Timestamp";
 
-    ResponseTools(){ }
+
+    /**
+     * 
+     */
+    private ResponseTools(){ }
 
     /**
      * Get Value from response.
@@ -44,8 +48,10 @@ public class ResponseTools {
 
     /**
      * Get latest value from storage.
+     *
+     * @param key by we get data and merge
      * @param cells is iterator of cells
-     * @param key is key by we get data and merge
+     * @return is value
      */
     @NotNull
     public static Value value(final @NotNull ByteBuffer key,

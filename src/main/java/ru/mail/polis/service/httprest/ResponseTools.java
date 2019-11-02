@@ -1,6 +1,5 @@
 package ru.mail.polis.service.httprest;
 
-
 import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
@@ -14,7 +13,7 @@ public class ResponseTools {
 
     private static final String TIMESTAMP_HEADER = "X-OK-Timestamp";
 
-    private ResponseTools(){ }
+    ResponseTools(){ }
 
     /**
      * Get Value from response.

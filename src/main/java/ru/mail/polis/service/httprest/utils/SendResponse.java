@@ -1,4 +1,4 @@
-package ru.mail.polis.service.httprest.Utils;
+package ru.mail.polis.service.httprest.utils;
 
 import one.nio.http.HttpSession;
 import one.nio.http.Response;
@@ -11,8 +11,13 @@ public class SendResponse {
 
     private static final Logger log = LoggerFactory.getLogger(SendResponse.class);
 
-    public SendResponse() { }
+    SendResponse() { }
 
+    /**
+     * Send response
+     * @param session is http session
+     * @param response is response for Http Session
+     */
     public static void sendResponse(@NotNull final HttpSession session,
                                     @NotNull final Response response) {
         try {

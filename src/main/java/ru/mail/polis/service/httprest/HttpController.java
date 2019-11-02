@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.nadenokk.Cell;
 import ru.mail.polis.dao.nadenokk.Value;
-import ru.mail.polis.service.httprest.Utils.RF;
+import ru.mail.polis.service.httprest.utils.RF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -46,21 +46,22 @@ class HttpController {
             @NotNull final Request request) throws IOException, NoSuchElementException {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        Iterator<Cell> cell = dao.lastIterator(key);
-        final List<Value> responses = new ArrayList<>();
+        final Iterator<Cell> cell = dao.lastIterator(key);
         final boolean proxyStatus = request.getHeader(PROXY_HEADER) != null;
 
         if (proxyStatus) {
             return ResponseTools.createResponse(ResponseTools.value(key, cell), true);
         }
 
-        String[] poolsNodes = topology.poolsNodes(rf.from, key);
+        final List<Value> responses = new ArrayList<>();
+
+        final String[] poolsNodes = topology.poolsNodes(rf.from, key);
         int asks = 0;
         for (final String node : poolsNodes) {
             Response response;
             if (topology.isMe(node)) {
-                Value val = ResponseTools.value(key, cell);
-                responses.add(val);
+                Value value = ResponseTools.value(key, cell);
+                responses.add(value);
                 asks++;
             } else {
                 try {
@@ -76,9 +77,9 @@ class HttpController {
 
         }
         if (asks >= rf.ask) {
-            Value val = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT).
-                    max(Comparator.comparingLong(Value::getTimeStamp)).orElseGet(Value::absent);
-            return ResponseTools.createResponse(val, false);
+            Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
+                    .max(Comparator.comparingLong(Value::getTimeStamp)).orElseGet(Value::absent);
+            return ResponseTools.createResponse(value, false);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
         }
@@ -97,7 +98,7 @@ class HttpController {
             return new Response(Response.CREATED, Response.EMPTY);
         }
 
-        String[] poolsNodes = topology.poolsNodes(rf.from, key);
+        final String[] poolsNodes = topology.poolsNodes(rf.from, key);
         int asks = 0;
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
@@ -105,7 +106,8 @@ class HttpController {
                 asks++;
             } else {
                 try {
-                    final Response response = pools.get(node).put(ENTITY_HEADER + id, request.getBody(), PROXY_HEADER);
+                    final Response response = pools.get(node)
+                            .put(ENTITY_HEADER + id, request.getBody(), PROXY_HEADER);
                     if (response.getStatus() == 201) {
                         asks++;
                     }
@@ -133,7 +135,7 @@ class HttpController {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         }
 
-        String[] poolsNodes = topology.poolsNodes(rf.from, key);
+        final String[] poolsNodes = topology.poolsNodes(rf.from, key);
         int asks = 0;
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
@@ -141,7 +143,8 @@ class HttpController {
                 asks++;
             } else {
                 try {
-                    final Response response = pools.get(node).delete(ENTITY_HEADER + id, PROXY_HEADER);
+                    final Response response = pools.get(node)
+                            .delete(ENTITY_HEADER + id, PROXY_HEADER);
                     if (response.getStatus() == 202) {
                         asks++;
                     }

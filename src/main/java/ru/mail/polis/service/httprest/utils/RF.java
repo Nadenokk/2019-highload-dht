@@ -1,4 +1,4 @@
-package ru.mail.polis.service.httprest.Utils;
+package ru.mail.polis.service.httprest.utils;
 
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
@@ -10,7 +10,7 @@ public class RF {
     public final int from;
 
     /**
-     * replicas Entity ask and form
+     * Replicas entity ask and form
      * @param ask is parameters ask
      * @param from is parameters from
      */
@@ -20,7 +20,7 @@ public class RF {
     }
 
     @NotNull
-    public static RF of(@NotNull final String value,@NotNull final int nodesSize ) {
+    public static RF of( final String value,@NotNull final int nodesSize ) {
         if (value != null) {
             final List<String> values = Splitter.on('/').splitToList(value);
             if (values.size() != 2) {

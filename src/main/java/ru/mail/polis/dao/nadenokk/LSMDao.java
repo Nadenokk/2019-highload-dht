@@ -119,7 +119,6 @@ public final class LSMDao implements DAO {
         return IteratorsTool.lastIterator(memTable, fileTables, from);
     }
 
-
     @NotNull
     private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) {
         return IteratorsTool.data(memTable, fileTables, from);

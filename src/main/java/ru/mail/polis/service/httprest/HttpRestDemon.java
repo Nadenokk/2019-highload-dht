@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.dao.DAO;
 import ru.mail.polis.service.Service;
 import ru.mail.polis.Record;
-import ru.mail.polis.service.httprest.Utils.RF;
-import ru.mail.polis.service.httprest.Utils.SendResponse;
+import ru.mail.polis.service.httprest.utils.RF;
+import ru.mail.polis.service.httprest.utils.SendResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -131,7 +131,8 @@ public final class HttpRestDemon extends HttpServer implements Service {
                 throw new IllegalArgumentException("Replicas is BAD!");
             }
         } catch (IllegalArgumentException e) {
-            SendResponse.sendResponse(session, new Response(Response.BAD_REQUEST, "Replicas is BAD".getBytes(StandardCharsets.UTF_8)));
+            SendResponse.sendResponse(session, new Response(Response
+                    .BAD_REQUEST, "Replicas is BAD".getBytes(StandardCharsets.UTF_8)));
             return;
         }
 

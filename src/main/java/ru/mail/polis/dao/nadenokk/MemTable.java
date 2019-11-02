@@ -38,9 +38,9 @@ public final class MemTable implements Table {
     @Override
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         final Value previous = map.put(key, Value.of(value));
-        if (previous == null) {
+        if (previous == null){
             tableSizeInByte.addAndGet(key.remaining() + value.remaining() + Long.BYTES);
-        } else  if (previous.getState() == Value.State.REMOVED) {
+        } else if (previous.getState() == Value.State.REMOVED){
             tableSizeInByte.addAndGet(value.remaining() + Long.BYTES);
         } else {
             tableSizeInByte.addAndGet(value.remaining() + Long.BYTES - previous.getData().remaining());

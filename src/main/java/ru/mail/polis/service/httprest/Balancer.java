@@ -46,7 +46,7 @@ public class Balancer implements Topology<String> {
 
     @NotNull
     @Override
-    public String[] poolsNodes(@NotNull final int count, @NotNull final ByteBuffer key) {
+    public String[] poolsNodes(final int count, @NotNull final ByteBuffer key) {
         final String[] res = new String[count] ;
         int index = Math.abs(hashCreate(key)) % servers.length;
         for(int j = 0; j < count; j++) {

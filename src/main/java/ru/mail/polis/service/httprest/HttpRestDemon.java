@@ -1,14 +1,12 @@
 package ru.mail.polis.service.httprest;
 
 import one.nio.http.HttpServer;
-import one.nio.http.HttpClient;
 import one.nio.http.HttpServerConfig;
 import one.nio.http.HttpSession;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import one.nio.http.Path;
 import one.nio.http.Param;
-import one.nio.net.ConnectionString;
 import one.nio.net.Socket;
 import one.nio.server.AcceptorConfig;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +23,8 @@ import java.util.NoSuchElementException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
+import java.net.http.HttpClient;
+
 
 public final class HttpRestDemon extends HttpServer implements Service {
 
@@ -55,7 +55,7 @@ public final class HttpRestDemon extends HttpServer implements Service {
             }
             log.info("We have next host in the pool : {}", host);
             assert !pools.containsKey(host);
-            pools.put(host, new HttpClient(new ConnectionString(host + "?timeout=100")));
+            pools.put(host,HttpClient.newBuilder().build());
         }
         this.nodesSize = pools.size() +1 ;
         this.httpController = new HttpController(dao, pools, topology);
@@ -64,7 +64,6 @@ public final class HttpRestDemon extends HttpServer implements Service {
     /**
      * Get request by this url.
      */
-    @NotNull
     @Path("/v0/status")
     public Response status() {
         return Response.ok("OK");

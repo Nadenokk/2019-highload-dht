@@ -1,6 +1,5 @@
 package ru.mail.polis.service.httprest;
 
-import one.nio.http.HttpClient;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
@@ -13,19 +12,27 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import one.nio.http.HttpException;
-import one.nio.pool.PoolException;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class HttpController {
 
     private static final Logger log = LoggerFactory.getLogger(HttpController.class);
-    private static final String PROXY_HEADER = "X-OK-Proxy: True";
+    private static final String PROXY_HEADER_TRUE = "X-OK-Proxy: True";
+    private static final String PROXY_HEADER = "X-OK-Proxy";
     private static final String ENTITY_HEADER = "/v0/entity?id=";
 
     private final Topology<String> topology;
@@ -47,37 +54,43 @@ class HttpController {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         final Iterator<Cell> cell = dao.lastIterator(key);
-        final boolean proxyStatus = request.getHeader(PROXY_HEADER) != null;
+        final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
 
         if (proxyStatus) {
             return ResponseTools.createResponse(ResponseTools.value(key, cell), true);
         }
 
         final List<Value> responses = new ArrayList<>();
-
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        int asks = 0;
+        final AtomicInteger asks = new AtomicInteger(0);
         for (final String node : poolsNodes) {
-            Response response;
             if (topology.isMe(node)) {
                 final Value value = ResponseTools.value(key, cell);
                 responses.add(value);
-                asks++;
+                asks.incrementAndGet();
             } else {
                 try {
-                    request.addHeader(PROXY_HEADER);
-                    response = pools.get(node).get(ENTITY_HEADER + id, PROXY_HEADER);
-                    asks++;
-                    final Value val = ResponseTools.getDataFromResponse(response);
+                    HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id)).
+                            setHeader(PROXY_HEADER, "True").
+                            timeout(Duration.ofMillis(100)).
+                            GET().build();
+                    CompletableFuture<HttpResponse<byte[]>> response = pools.get(node).
+                            sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
+
+                    final Value val = ResponseTools.getDataFromResponseAsync(response.thenApply(HttpResponse::headers).
+                                    get().firstValue("X-OK-Timestamp").orElse("-1"),
+                            ByteBuffer.wrap(response.thenApply(HttpResponse::body).get()),
+                            response.thenApply(HttpResponse::statusCode).get());
                     responses.add(val);
-                } catch (HttpException | PoolException | InterruptedException e) {
+                    asks.incrementAndGet();
+                } catch ( InterruptedException | ExecutionException  e) {
                     log.info("Can not wait answer from client {} in host {} for Get",
                             e.getLocalizedMessage(), node);
                 }
             }
-
         }
-        if (asks >= rf.ask) {
+
+        if (asks.get() >= rf.ask) {
             final Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
                     .max(Comparator.comparingLong(Value::getTimeStamp)).orElseGet(Value::absent);
             return ResponseTools.createResponse(value, false);
@@ -92,7 +105,7 @@ class HttpController {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         final ByteBuffer byteBuffer = ByteBuffer.wrap(request.getBody());
-        final boolean proxyStatus = request.getHeader(PROXY_HEADER) != null;
+        final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
 
         if (proxyStatus) {
             dao.upsert(key, byteBuffer);
@@ -100,25 +113,33 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        int asks = 0;
+        final AtomicInteger asks = new AtomicInteger(0);
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 dao.upsert(key, byteBuffer);
-                asks++;
+                asks.incrementAndGet();
             } else {
                 try {
-                    final Response response = pools.get(node)
-                            .put(ENTITY_HEADER + id, request.getBody(), PROXY_HEADER);
-                    if (response.getStatus() == 201) {
-                        asks++;
+                    final byte[] bytes = request.getBody();
+                    HttpRequest httpRequest = HttpRequest.newBuilder().
+                            uri(URI.create(node + ENTITY_HEADER + id)).
+                            setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100)).
+                            PUT(HttpRequest.BodyPublishers.ofByteArray(bytes)).
+                            build();
+                    CompletableFuture<HttpResponse<String>> response =
+                            pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+                    if ( response.thenApply(HttpResponse::statusCode).get() == 201) {
+                         asks.incrementAndGet();
                     }
-                } catch (HttpException | PoolException | InterruptedException e) {
+                } catch ( InterruptedException | ExecutionException e) {
                     log.info("Can not wait answer from client {} in host {} for UpSet",
                             e.getLocalizedMessage(), node);
                 }
             }
         }
-        if (asks >= rf.ask) {
+
+        if (asks.get() >= rf.ask) {
             return new Response(Response.CREATED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
@@ -130,7 +151,7 @@ class HttpController {
                     @NotNull final Request request) throws IOException {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        final boolean proxyStatus = request.getHeader(PROXY_HEADER) != null;
+        final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
 
         if (proxyStatus) {
             dao.remove(key);
@@ -138,25 +159,30 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        int asks = 0;
+        final AtomicInteger  asks = new AtomicInteger(0);
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 dao.remove(key);
-                asks++;
+                asks.incrementAndGet();
             } else {
                 try {
-                    final Response response = pools.get(node)
-                            .delete(ENTITY_HEADER + id, PROXY_HEADER);
-                    if (response.getStatus() == 202) {
-                        asks++;
+                    HttpRequest httpRequest = HttpRequest.newBuilder().DELETE().uri(URI.create(node + ENTITY_HEADER + id)).
+                            setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100)).
+                            build();
+                    CompletableFuture<HttpResponse<String>> response =
+                            pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+                    if ( response.thenApply(HttpResponse::statusCode).get() == 202) {
+                        asks.incrementAndGet();
                     }
-                } catch (HttpException | PoolException | InterruptedException e) {
+                } catch ( InterruptedException | ExecutionException  e) {
                     log.info("Can not wait answer from client {} in host {} for Dell",
                             e.getLocalizedMessage(), node);
                 }
             }
         }
-        if (asks >= rf.ask) {
+
+        if (asks.get() >= rf.ask) {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);

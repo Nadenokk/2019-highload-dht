@@ -24,7 +24,7 @@ public class StorageSession extends HttpSession{
 
     private Iterator<Record> data;
 
-    public StorageSession(
+    StorageSession(
             @NotNull final Socket socket,
             @NotNull final HttpServer server) {
         super(socket, server);
@@ -35,7 +35,7 @@ public class StorageSession extends HttpSession{
      * @param records is iterator as data for stream.
      * @throws IOException throw exception.
      */
-    public void stream(@NotNull final Iterator<Record> records) throws IOException {
+    void stream(@NotNull final Iterator<Record> records) throws IOException {
         this.data = records;
         final Response response = new Response(Response.OK);
         response.addHeader("Transfer-Encoding: chunked");

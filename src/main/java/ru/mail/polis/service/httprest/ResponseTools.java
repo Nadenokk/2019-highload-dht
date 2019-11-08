@@ -11,32 +11,27 @@ import ru.mail.polis.dao.nadenokk.Value;
 
 public final class ResponseTools {
 
-    private static final String TIMESTAMP_HEADER = "X-OK-Timestamp";
+    private static final String TIMESTAMP_HEADER = "X-OK-Timestamp :";
 
     private ResponseTools(){ }
 
-    /**
-     * Get Value from response.
+     /**
+     * Get Value from response
      *
-     * @param response response from witch we should be get value.
+     * @param timestamp is TimeStamp value
+     * @param data iis Data
+     * @param statusCode is status http response
+     * @return Value from class DAO
+     * @throws IOException exception get response from nodes
      */
     @NotNull
-    public static Value getDataFromResponse(@NotNull final Response response) throws IOException {
-
-        final String timestamp = response.getHeader(TIMESTAMP_HEADER);
-
-        if(response.getStatus() == 200) {
-            if(timestamp == null) {
-                throw new IllegalArgumentException("Wrong input data!");
-            }
-            return Value.present(ByteBuffer.wrap(response.getBody()),
-                    Long.parseLong(timestamp));
-        } else if(response.getStatus() == 404) {
-            if(timestamp == null) {
-                return Value.absent();
-            } else {
-                return Value.removed(Long.parseLong(timestamp));
-            }
+    public static Value getDataFromResponseAsync(@NotNull final String timestamp,
+                                                 final  ByteBuffer data,
+                                                 final int statusCode ) throws IOException {
+        if(statusCode == 200) {
+            return Value.present(data,Long.parseLong(timestamp));
+        } else if(statusCode == 404) {
+            return Value.removed(Long.parseLong(timestamp));
         } else {
             throw new IOException("IOException while get response from nodes");
         }

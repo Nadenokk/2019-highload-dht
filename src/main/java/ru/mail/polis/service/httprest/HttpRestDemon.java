@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.net.http.HttpClient;
 
-
 public final class HttpRestDemon extends HttpServer implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRestDemon.class);

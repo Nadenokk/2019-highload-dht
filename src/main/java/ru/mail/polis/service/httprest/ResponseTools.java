@@ -16,17 +16,17 @@ public final class ResponseTools {
     private ResponseTools(){ }
 
      /**
-     * Get Value from response
+     * Get Value from response.
      *
      * @param timestamp is TimeStamp value
      * @param data iis Data
      * @param statusCode is status http response
-     * @return Value from class DAO
+     * @return value of class DAO
      * @throws IOException exception get response from nodes
      */
     @NotNull
     public static Value getDataFromResponseAsync(@NotNull final String timestamp,
-                                                 final  ByteBuffer data,
+                                                 final ByteBuffer data,
                                                  final int statusCode ) throws IOException {
         if(statusCode == 200) {
             return Value.present(data,Long.parseLong(timestamp));

@@ -70,20 +70,20 @@ class HttpController {
                 asks.incrementAndGet();
             } else {
                 try {
-                    HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id)).
-                            setHeader(PROXY_HEADER, "True").
-                            timeout(Duration.ofMillis(100)).
-                            GET().build();
-                    CompletableFuture<HttpResponse<byte[]>> response = pools.get(node).
-                            sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
+                    final HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id))
+                            .setHeader(PROXY_HEADER, "True")
+                            .timeout(Duration.ofMillis(100))
+                            .GET().build();
+                    final CompletableFuture<HttpResponse<byte[]>> response = pools.get(node)
+                            .sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
 
-                    final Value val = ResponseTools.getDataFromResponseAsync(response.thenApply(HttpResponse::headers).
-                                    get().firstValue("X-OK-Timestamp").orElse("-1"),
+                    final Value val = ResponseTools.getDataFromResponseAsync(response.thenApply(HttpResponse::headers)
+                                    .get().firstValue("X-OK-Timestamp").orElse("-1"),
                             ByteBuffer.wrap(response.thenApply(HttpResponse::body).get()),
                             response.thenApply(HttpResponse::statusCode).get());
                     responses.add(val);
                     asks.incrementAndGet();
-                } catch ( InterruptedException | ExecutionException  e) {
+                } catch ( InterruptedException | ExecutionException e) {
                     log.info("Can not wait answer from client {} in host {} for Get",
                             e.getLocalizedMessage(), node);
                 }
@@ -121,12 +121,12 @@ class HttpController {
             } else {
                 try {
                     final byte[] bytes = request.getBody();
-                    HttpRequest httpRequest = HttpRequest.newBuilder().
-                            uri(URI.create(node + ENTITY_HEADER + id)).
-                            setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100)).
-                            PUT(HttpRequest.BodyPublishers.ofByteArray(bytes)).
-                            build();
-                    CompletableFuture<HttpResponse<String>> response =
+                    final HttpRequest httpRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(node + ENTITY_HEADER + id))
+                            .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                            .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
+                            .build();
+                    final CompletableFuture<HttpResponse<String>> response =
                             pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
 
                     if ( response.thenApply(HttpResponse::statusCode).get() == 201) {
@@ -159,23 +159,24 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final AtomicInteger  asks = new AtomicInteger(0);
+        final AtomicInteger asks = new AtomicInteger(0);
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 dao.remove(key);
                 asks.incrementAndGet();
             } else {
                 try {
-                    HttpRequest httpRequest = HttpRequest.newBuilder().DELETE().uri(URI.create(node + ENTITY_HEADER + id)).
-                            setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100)).
-                            build();
-                    CompletableFuture<HttpResponse<String>> response =
+                    final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
+                            .uri(URI.create(node + ENTITY_HEADER + id))
+                            .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                            .build();
+                    final CompletableFuture<HttpResponse<String>> response =
                             pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
 
                     if ( response.thenApply(HttpResponse::statusCode).get() == 202) {
                         asks.incrementAndGet();
                     }
-                } catch ( InterruptedException | ExecutionException  e) {
+                } catch ( InterruptedException | ExecutionException e) {
                     log.info("Can not wait answer from client {} in host {} for Dell",
                             e.getLocalizedMessage(), node);
                 }

@@ -16,6 +16,7 @@
 !prof-stage3/*
 !prof-stage4/*
 !prof-stage5/*
+!prof-stage6/*
 
 # ...even if they are in subdirectories
 !*/

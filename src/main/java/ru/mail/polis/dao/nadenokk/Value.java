@@ -1,8 +1,10 @@
 package ru.mail.polis.dao.nadenokk;
 
 import org.jetbrains.annotations.NotNull;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.ByteBuffer;
+import java.net.http.HttpResponse;
 
 public final class Value implements Comparable<Value> {
 
@@ -86,5 +88,29 @@ public final class Value implements Comparable<Value> {
         final long time = System.currentTimeMillis() * 10000 + atomicInteger.incrementAndGet();
         if (atomicInteger.get() > 10000) atomicInteger.set(0);
         return time;
+    }
+
+    /**
+     * Get Value from response.
+     *
+     * @param response is HttpResponse  data
+     * @return value of class DAO
+     */
+    @NotNull
+    public static Value getDataFromResponseAsync(@NotNull final HttpResponse<byte[]> response) {
+
+        final String tm = response.headers().firstValue(
+                "X-OK-Timestamp".toLowerCase(Locale.ENGLISH)).orElse(null);
+        if (tm == null) {
+            return Value.absent();
+        }
+        final int statusCode = response.statusCode();
+        if(statusCode == 200) {
+            return Value.present(ByteBuffer.wrap(response.body()),Long.parseLong(tm));
+        } else if(statusCode == 404) {
+            return Value.removed(Long.parseLong(tm));
+        } else {
+            return Value.removed(Long.parseLong(tm));
+        }
     }
 }

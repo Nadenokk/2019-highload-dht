@@ -9,6 +9,7 @@ import ru.mail.polis.dao.nadenokk.Value;
 import ru.mail.polis.service.httprest.utils.RF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -19,14 +20,18 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ArrayList;
 import java.util.Comparator;
-
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 class HttpController {
 
@@ -38,6 +43,7 @@ class HttpController {
     private final Topology<String> topology;
     private final Map<String, HttpClient> pools;
     private final DAO dao;
+    private final ExecutorService executorService;
 
     HttpController(@NotNull final DAO dao,
                    @NotNull final Map<String, HttpClient> pools,
@@ -45,12 +51,13 @@ class HttpController {
         this.dao = dao;
         this.pools = pools;
         this.topology = topology;
+        this.executorService = Executors.newFixedThreadPool(3);
     }
 
     Response get(
             @NotNull final String id,
             @NotNull final RF rf,
-            @NotNull final Request request) throws IOException, NoSuchElementException {
+            @NotNull final Request request) throws NoSuchElementException {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
         final Iterator<Cell> cell = dao.lastIterator(key);
@@ -62,33 +69,40 @@ class HttpController {
 
         final List<Value> responses = new ArrayList<>();
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final AtomicInteger asks = new AtomicInteger(0);
+        final Collection<CompletableFuture<Value>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final Value value = ResponseTools.value(key, cell);
-                responses.add(value);
-                asks.incrementAndGet();
+                final CompletableFuture<Value> future = CompletableFuture.supplyAsync(() -> ResponseTools.value(key, cell));
+                futures.add(future);
             } else {
-                try {
-                    final HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id))
-                            .setHeader(PROXY_HEADER, "True")
-                            .timeout(Duration.ofMillis(100))
-                            .GET().build();
-                    final CompletableFuture<HttpResponse<byte[]>> response = pools.get(node)
-                            .sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
-
-                    final Value val = ResponseTools.getDataFromResponseAsync(response.thenApply(HttpResponse::headers)
-                                    .get().firstValue("X-OK-Timestamp").orElse("-1"),
-                            ByteBuffer.wrap(response.thenApply(HttpResponse::body).get()),
-                            response.thenApply(HttpResponse::statusCode).get());
-                    responses.add(val);
-                    asks.incrementAndGet();
-                } catch ( InterruptedException | ExecutionException e) {
-                    log.info("Can not wait answer from client {} in host {} for Get",
-                            e.getLocalizedMessage(), node);
-                }
+                final HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id))
+                        .setHeader(PROXY_HEADER, "True")
+                        .timeout(Duration.ofMillis(100))
+                        .GET().build();
+                final CompletableFuture<Value> response = pools.get(node)
+                        .sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray()).
+                                thenApply(Value::getDataFromResponseAsync);
+                futures.add(response);
             }
         }
+
+        AtomicInteger asks = new AtomicInteger(0);
+        AtomicInteger asksFalse = new AtomicInteger(0);
+
+        futures.forEach(f -> {
+            if ((rf.ask - asks.get()) > (rf.from - asksFalse.get() - asks.get())) return;
+            try {
+                Value value = f.get();
+                if (value != null) {
+                    responses.add(value);
+                    asks.getAndIncrement();
+                } else {
+                    asksFalse.getAndIncrement();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                asksFalse.getAndIncrement();
+            }
+        });
 
         if (asks.get() >= rf.ask) {
             final Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
@@ -113,31 +127,50 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final AtomicInteger asks = new AtomicInteger(0);
+        final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                dao.upsert(key, byteBuffer);
-                asks.incrementAndGet();
-            } else {
-                try {
-                    final byte[] bytes = request.getBody();
-                    final HttpRequest httpRequest = HttpRequest.newBuilder()
-                            .uri(URI.create(node + ENTITY_HEADER + id))
-                            .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
-                            .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
-                            .build();
-                    final CompletableFuture<HttpResponse<String>> response =
-                            pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                    if ( response.thenApply(HttpResponse::statusCode).get() == 201) {
-                         asks.incrementAndGet();
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
+                    try {
+                        dao.upsert(key, byteBuffer);
+                    } catch (IOException e) {
+                        log.info("Error UpSet ");
                     }
-                } catch ( InterruptedException | ExecutionException e) {
-                    log.info("Can not wait answer from client {} in host {} for UpSet",
-                            e.getLocalizedMessage(), node);
-                }
+                }, executorService).handle((s, t) -> {
+                    if (t != null) {
+                        return -1;
+                    }
+                    return 201;
+                });
+                futures.add(future);
+            } else {
+                final byte[] bytes = request.getBody();
+                final HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(node + ENTITY_HEADER + id))
+                        .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                        .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
+                        .build();
+                final CompletableFuture<Integer> response =
+                        pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.discarding()).
+                                handle((a, exp) -> a.statusCode());
+                futures.add(response);
             }
         }
+
+        AtomicInteger asks = new AtomicInteger(0);
+        AtomicInteger asksFalse = new AtomicInteger(0);
+        futures.forEach(f -> {
+            if ((rf.ask - asks.get()) > (rf.from - asksFalse.get() - asks.get())) return;
+            try {
+                if (f.get() == 201) {
+                    asks.getAndIncrement();
+                } else {
+                    asksFalse.getAndIncrement();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                asksFalse.getAndIncrement();
+            }
+        });
 
         if (asks.get() >= rf.ask) {
             return new Response(Response.CREATED, Response.EMPTY);
@@ -159,30 +192,49 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final AtomicInteger asks = new AtomicInteger(0);
+        final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                dao.remove(key);
-                asks.incrementAndGet();
-            } else {
-                try {
-                    final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
-                            .uri(URI.create(node + ENTITY_HEADER + id))
-                            .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
-                            .build();
-                    final CompletableFuture<HttpResponse<String>> response =
-                            pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                    if ( response.thenApply(HttpResponse::statusCode).get() == 202) {
-                        asks.incrementAndGet();
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
+                    try {
+                        dao.remove(key);
+                    } catch (IOException e) {
+                        log.info("Error for Remove");
                     }
-                } catch ( InterruptedException | ExecutionException e) {
-                    log.info("Can not wait answer from client {} in host {} for Dell",
-                            e.getLocalizedMessage(), node);
-                }
+                }, executorService).handle((s, t) -> {
+                    if (t != null) {
+                        return -1;
+                    }
+                    return 202;
+                });
+                futures.add(future);
+            } else {
+
+                final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
+                        .uri(URI.create(node + ENTITY_HEADER + id))
+                        .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                        .build();
+                final CompletableFuture<Integer> response =
+                        pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.discarding()).
+                                handle((a, exp) -> a.statusCode());
+                futures.add(response);
             }
         }
 
+        AtomicInteger asks = new AtomicInteger(0);
+        AtomicInteger asksf = new AtomicInteger(0);
+        futures.forEach(f -> {
+            if ((rf.ask - asks.get()) > (rf.from - asksf.get() - asks.get())) return;
+            try {
+                if (f.get() == 202) {
+                    asks.getAndIncrement();
+                } else {
+                    asksf.getAndIncrement();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                asksf.getAndIncrement();
+            }
+        });
         if (asks.get() >= rf.ask) {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {

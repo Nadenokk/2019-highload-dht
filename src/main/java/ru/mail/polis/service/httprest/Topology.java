@@ -11,7 +11,7 @@ public interface Topology<T> {
     boolean isMe(@NotNull final T node);
 
     @NotNull
-    String[] poolsNodes(@NotNull final int count, @NotNull final ByteBuffer key);
+    String[] poolsNodes(final int count, @NotNull final ByteBuffer key);
 
     Set<T> all();
 }

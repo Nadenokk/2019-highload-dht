@@ -2,7 +2,6 @@ package ru.mail.polis.service.httprest;
 
 import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import ru.mail.polis.dao.nadenokk.IteratorsTool;
@@ -14,28 +13,6 @@ public final class ResponseTools {
     private static final String TIMESTAMP_HEADER = "X-OK-Timestamp :";
 
     private ResponseTools(){ }
-
-     /**
-     * Get Value from response.
-     *
-     * @param timestamp is TimeStamp value
-     * @param data iis Data
-     * @param statusCode is status http response
-     * @return value of class DAO
-     * @throws IOException exception get response from nodes
-     */
-    @NotNull
-    public static Value getDataFromResponseAsync(@NotNull final String timestamp,
-                                                 final ByteBuffer data,
-                                                 final int statusCode ) throws IOException {
-        if(statusCode == 200) {
-            return Value.present(data,Long.parseLong(timestamp));
-        } else if(statusCode == 404) {
-            return Value.removed(Long.parseLong(timestamp));
-        } else {
-            throw new IOException("IOException while get response from nodes");
-        }
-    }
 
     /**
      * Get latest value from storage.

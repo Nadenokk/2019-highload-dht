@@ -109,7 +109,8 @@ class HttpController {
                    @NotNull final Request request) throws IOException {
 
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        final ByteBuffer byteBuffer = ByteBuffer.wrap(request.getBody());
+        final byte[] bytes = request.getBody();
+        final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
 
         if (proxyStatus) {
@@ -130,7 +131,6 @@ class HttpController {
                 }, executorService).handle((s, t) -> (t == null) ? 201 : -1);
                 futures.add(future);
             } else {
-                final byte[] bytes = request.getBody();
                 final CompletableFuture<Integer> response =
                         pools.get(node).sendAsync(CreateHttpRequest.createUpset(node, id, bytes),
                                 HttpResponse.BodyHandlers.discarding()).

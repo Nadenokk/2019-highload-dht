@@ -6,7 +6,7 @@ import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.net.URI;
 
-public class CreateHttpRequest {
+public final class CreateHttpRequest {
 
     private static final String PROXY_HEADER = "X-OK-Proxy";
     private static final String ENTITY_HEADER = "/v0/entity?id=";
@@ -28,8 +28,8 @@ public class CreateHttpRequest {
     }
 
     /**
-     * @param node  is node
-     * @param id    is id
+     * @param node  is Node
+     * @param id    is ID
      * @param bytes is Data
      * @return request for UpSet
      */
@@ -44,8 +44,8 @@ public class CreateHttpRequest {
     }
 
     /**
-     * @param node is node
-     * @param id   is id
+     * @param node is Node
+     * @param id   is ID
      * @return request for Delelete
      */
     @NotNull

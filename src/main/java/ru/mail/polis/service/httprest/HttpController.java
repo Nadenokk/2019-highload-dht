@@ -177,8 +177,12 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                dao.remove(key);
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
+                    try {
+                        dao.remove(key);
+                    } catch (IOException e) {
+                        log.info("Error for Remove");
+                    }
                 }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {

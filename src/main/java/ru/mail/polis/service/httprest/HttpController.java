@@ -174,7 +174,7 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
+        final Collection<CompletableFuture<Integer>> futures = new ArrayList<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {

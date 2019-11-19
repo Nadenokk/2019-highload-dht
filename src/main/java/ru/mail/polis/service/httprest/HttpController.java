@@ -67,7 +67,6 @@ class HttpController {
             return ResponseTools.createResponse(ResponseTools.value(key, cell), true);
         }
 
-        final List<Value> responses = new ArrayList<>();
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
         final Collection<CompletableFuture<Value>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
@@ -86,18 +85,18 @@ class HttpController {
             }
         }
 
-        AtomicInteger asks = new AtomicInteger(0);
-        AtomicInteger asksFalse = new AtomicInteger(0);
-
+        final AtomicInteger asks = new AtomicInteger(0);
+        final AtomicInteger asksFalse = new AtomicInteger(0);
+        final List<Value> responses = new ArrayList<>(rf.from);
         futures.forEach(f -> {
-            if ((rf.ask - asks.get()) > (rf.from - asksFalse.get() - asks.get())) return;
+            if (rf.ask  > rf.from - asksFalse.get()) return;
             try {
-                Value value = f.get();
-                if (value != null) {
+                final Value value = f.get();
+                if (value == null) {
+                    asksFalse.getAndIncrement();
+                } else {
                     responses.add(value);
                     asks.getAndIncrement();
-                } else {
-                    asksFalse.getAndIncrement();
                 }
             } catch (InterruptedException | ExecutionException e) {
                 asksFalse.getAndIncrement();
@@ -136,12 +135,7 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error UpSet ");
                     }
-                }, executorService).handle((s, t) -> {
-                    if (t != null) {
-                        return -1;
-                    }
-                    return 201;
-                });
+                }, executorService).handle((s, t) -> (t != null) ?-1:201);
                 futures.add(future);
             } else {
                 final byte[] bytes = request.getBody();
@@ -157,10 +151,10 @@ class HttpController {
             }
         }
 
-        AtomicInteger asks = new AtomicInteger(0);
-        AtomicInteger asksFalse = new AtomicInteger(0);
+        final AtomicInteger asks = new AtomicInteger(0);
+        final AtomicInteger asksFalse = new AtomicInteger(0);
         futures.forEach(f -> {
-            if ((rf.ask - asks.get()) > (rf.from - asksFalse.get() - asks.get())) return;
+            if (rf.ask  > rf.from - asksFalse.get()) return;
             try {
                 if (f.get() == 201) {
                     asks.getAndIncrement();
@@ -172,11 +166,8 @@ class HttpController {
             }
         });
 
-        if (asks.get() >= rf.ask) {
-            return new Response(Response.CREATED, Response.EMPTY);
-        } else {
-            return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
-        }
+        return  (asks.get() >= rf.ask)?new Response(Response.CREATED, Response.EMPTY):
+                new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
     }
 
     Response delete(@NotNull final String id,
@@ -201,15 +192,9 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error for Remove");
                     }
-                }, executorService).handle((s, t) -> {
-                    if (t != null) {
-                        return -1;
-                    }
-                    return 202;
-                });
+                }, executorService).handle((s, t) -> (t != null)?-1:202);
                 futures.add(future);
             } else {
-
                 final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
                         .uri(URI.create(node + ENTITY_HEADER + id))
                         .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
@@ -221,10 +206,10 @@ class HttpController {
             }
         }
 
-        AtomicInteger asks = new AtomicInteger(0);
-        AtomicInteger asksf = new AtomicInteger(0);
+        final AtomicInteger asks = new AtomicInteger(0);
+        final AtomicInteger asksf = new AtomicInteger(0);
         futures.forEach(f -> {
-            if ((rf.ask - asks.get()) > (rf.from - asksf.get() - asks.get())) return;
+            if (asks.get() > rf.from - asksf.get()) return;
             try {
                 if (f.get() == 202) {
                     asks.getAndIncrement();
@@ -235,10 +220,7 @@ class HttpController {
                 asksf.getAndIncrement();
             }
         });
-        if (asks.get() >= rf.ask) {
-            return new Response(Response.ACCEPTED, Response.EMPTY);
-        } else {
-            return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
-        }
+        return (asks.get() >= rf.ask)?new Response(Response.ACCEPTED, Response.EMPTY):
+                new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
     }
 }

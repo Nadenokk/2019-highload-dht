@@ -178,11 +178,7 @@ class HttpController {
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
-                    try {
-                        dao.remove(key);
-                    } catch (IOException e) {
-                        log.info("Error for Remove");
-                    }
+                    deleteDao(key);
                 }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {
@@ -212,6 +208,13 @@ class HttpController {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
+        }
+    }
+    private void deleteDao(@NotNull final ByteBuffer key)  {
+        try {
+            dao.remove(key);
+        } catch (IOException e) {
+            log.info("Error UpSet ");
         }
     }
 }

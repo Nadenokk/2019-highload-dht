@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
@@ -28,9 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 
@@ -38,8 +35,6 @@ class HttpController {
 
     private static final Logger log = LoggerFactory.getLogger(HttpController.class);
     private static final String PROXY_HEADER_TRUE = "X-OK-Proxy: True";
-    private static final String PROXY_HEADER = "X-OK-Proxy";
-    private static final String ENTITY_HEADER = "/v0/entity?id=";
 
     private final Topology<String> topology;
     private final Map<String, HttpClient> pools;
@@ -75,12 +70,8 @@ class HttpController {
                 final CompletableFuture<Value> future = CompletableFuture.supplyAsync(() -> ResponseTools.value(key, cell));
                 futures.add(future);
             } else {
-                final HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id))
-                        .setHeader(PROXY_HEADER, "True")
-                        .timeout(Duration.ofMillis(100))
-                        .GET().build();
                 final CompletableFuture<Value> response = pools.get(node)
-                        .sendAsync(httpRequest, HttpResponse.BodyHandlers.ofByteArray()).
+                        .sendAsync(CreateHttpRequest.createGet(node, id), HttpResponse.BodyHandlers.ofByteArray()).
                                 thenApply(Value::getDataFromResponseAsync);
                 futures.add(response);
             }
@@ -90,7 +81,7 @@ class HttpController {
         final AtomicInteger asksFalse = new AtomicInteger(0);
         final List<Value> responses = new ArrayList<>(rf.from);
         futures.forEach(f -> {
-            if (rf.ask  > rf.from - asksFalse.get()) return;
+            if (rf.ask > rf.from - asksFalse.get()) return;
             try {
                 final Value value = f.get();
                 if (value == null) {
@@ -136,12 +127,12 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error UpSet ");
                     }
-                }, executorService).handle((s, t) -> (t == null) ?201:-1);
+                }, executorService).handle((s, t) -> (t == null) ? 201 : -1);
                 futures.add(future);
             } else {
                 final byte[] bytes = request.getBody();
                 final CompletableFuture<Integer> response =
-                        pools.get(node).sendAsync(CreateHttpRequest.createUpset(node,id,bytes),
+                        pools.get(node).sendAsync(CreateHttpRequest.createUpset(node, id, bytes),
                                 HttpResponse.BodyHandlers.discarding()).
                                 handle((a, exp) -> a.statusCode());
                 futures.add(response);
@@ -151,7 +142,7 @@ class HttpController {
         final AtomicInteger asks = new AtomicInteger(0);
         final AtomicInteger asksFalse = new AtomicInteger(0);
         futures.forEach(f -> {
-            if (rf.ask  > rf.from - asksFalse.get()) return;
+            if (rf.ask > rf.from - asksFalse.get()) return;
             try {
                 if (f.get() == 201) {
                     asks.getAndIncrement();
@@ -192,11 +183,12 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error for Remove");
                     }
-                }, executorService).handle((s, t) -> (t == null)?202:-1);
+                }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
-                        pools.get(node).sendAsync(CreateHttpRequest.creteDelete(node,id), HttpResponse.BodyHandlers.discarding()).
+                        pools.get(node).sendAsync(CreateHttpRequest.creteDelete(node, id),
+                                HttpResponse.BodyHandlers.discarding()).
                                 handle((a, exp) -> a.statusCode());
                 futures.add(response);
             }

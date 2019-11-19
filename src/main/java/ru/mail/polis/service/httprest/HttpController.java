@@ -122,13 +122,8 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
-                    try {
-                        dao.upsert(key, byteBuffer);
-                    } catch (IOException e) {
-                        log.info("Error UpSet ");
-                    }
-                }, executorService).handle((s, t) -> expReturn201(t));
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> upsetDao(key,byteBuffer),
+                        executorService).handle((s, t) -> expReturn201(t));
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -139,17 +134,17 @@ class HttpController {
             }
         }
 
-        final AtomicInteger asks = new AtomicInteger(0);
+        final AtomicInteger ask = new AtomicInteger(0);
         futures.forEach(f -> {
-            if (rf.from < rf.ask + asks.get() ) return;
+            if (rf.from < rf.ask + ask.get() ) return;
             try {
-                if (f.get() != 201 ) asks.incrementAndGet();
+                if (f.get() != 201 ) ask.incrementAndGet();
             } catch (InterruptedException | ExecutionException e) {
-                asks.incrementAndGet();
+                ask.incrementAndGet();
             }
         });
 
-        if (rf.from - asks.get() >= rf.ask) {
+        if (rf.from - ask.get() >= rf.ask) {
             return new Response(Response.CREATED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
@@ -213,6 +208,14 @@ class HttpController {
     private void deleteDao(@NotNull final ByteBuffer key)  {
         try {
             dao.remove(key);
+        } catch (IOException e) {
+            log.info("Error UpSet ");
+        }
+    }
+
+    private void upsetDao(@NotNull final ByteBuffer key,final ByteBuffer byteBuffer){
+        try {
+            dao.upsert(key, byteBuffer);
         } catch (IOException e) {
             log.info("Error UpSet ");
         }

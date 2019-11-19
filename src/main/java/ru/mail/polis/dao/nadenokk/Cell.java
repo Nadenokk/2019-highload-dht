@@ -35,3 +35,4 @@ public class Cell {
         return generation;
     }
 }
+

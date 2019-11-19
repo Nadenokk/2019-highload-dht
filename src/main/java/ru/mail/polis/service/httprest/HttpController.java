@@ -135,10 +135,10 @@ class HttpController {
         }
 
         final AtomicInteger ask = new AtomicInteger(0);
-        futures.forEach(f -> {
+        futures.forEach(u -> {
             if (rf.from < rf.ask + ask.get() ) return;
             try {
-                if (f.get() != 201 ) ask.incrementAndGet();
+                if (u.get() != 201 ) ask.incrementAndGet();
             } catch (InterruptedException | ExecutionException e) {
                 ask.incrementAndGet();
             }
@@ -179,17 +179,17 @@ class HttpController {
             }
         }
 
-        final AtomicInteger asks = new AtomicInteger(0);
-        futures.forEach(f -> {
-            if (rf.from < rf.ask + asks.get() ) return;
+        final AtomicInteger ask = new AtomicInteger(0);
+        futures.forEach(d -> {
+            if (rf.ask + ask.get() > rf.from) return;
             try {
-                if (f.get() != 202 ) asks.incrementAndGet();
+                if (202 != d.get()) ask.incrementAndGet();
             } catch (InterruptedException | ExecutionException e) {
-                asks.incrementAndGet();
+                ask.incrementAndGet();
             }
         });
 
-        if (rf.from - asks.get() >= rf.ask) {
+        if (rf.from - ask.get() >= rf.ask) {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);

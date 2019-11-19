@@ -206,7 +206,7 @@ class HttpController {
         }
     }
 
-    private final Integer expReturn(final Throwable t){
+    private Integer expReturn(final Throwable t){
         return(t == null)?202:-1;
     }
 

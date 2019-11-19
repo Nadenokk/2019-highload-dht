@@ -128,7 +128,7 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error UpSet ");
                     }
-                }, executorService).handle((s, t) -> (t == null) ? 201 : -1);
+                }).handle((s, t) -> (t == null) ? 201 : -1);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -177,13 +177,12 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> {
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
                     try {
                         dao.remove(key);
                     } catch (IOException e) {
                         log.info("Error for Remove");
                     }
-                    return null;
                 }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {

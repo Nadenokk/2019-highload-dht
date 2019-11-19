@@ -164,8 +164,11 @@ class HttpController {
     Response delete(@NotNull final String id,
                     @NotNull final RF rf,
                     @NotNull final Request request) throws IOException {
+
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        if ((request.getHeader(PROXY_HEADER_TRUE) != null)) {
+        final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
+
+        if (proxyStatus) {
             dao.remove(key);
             return new Response(Response.ACCEPTED, Response.EMPTY);
         }
@@ -174,8 +177,8 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key)
-                        , executorService).handle((s, t) -> (t == null) ? 202 : -1);
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key)).
+                        handle((s, t) -> expReturn(t));
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -203,6 +206,9 @@ class HttpController {
         }
     }
 
+    private final Integer expReturn(final Throwable t){
+        return(t == null)?202:-1;
+    }
 
     private void deleteDao(@NotNull final ByteBuffer key)  {
         try {

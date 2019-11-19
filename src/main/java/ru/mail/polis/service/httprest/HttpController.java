@@ -7,6 +7,7 @@ import ru.mail.polis.dao.DAO;
 import ru.mail.polis.dao.nadenokk.Cell;
 import ru.mail.polis.dao.nadenokk.Value;
 import ru.mail.polis.service.httprest.utils.RF;
+import ru.mail.polis.service.httprest.utils.CreateHttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,13 +140,9 @@ class HttpController {
                 futures.add(future);
             } else {
                 final byte[] bytes = request.getBody();
-                final HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(node + ENTITY_HEADER + id))
-                        .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
-                        .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
-                        .build();
                 final CompletableFuture<Integer> response =
-                        pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.discarding()).
+                        pools.get(node).sendAsync(CreateHttpRequest.createUpset(node,id,bytes),
+                                HttpResponse.BodyHandlers.discarding()).
                                 handle((a, exp) -> a.statusCode());
                 futures.add(response);
             }
@@ -198,12 +195,8 @@ class HttpController {
                 }, executorService).handle((s, t) -> (t == null)?202:-1);
                 futures.add(future);
             } else {
-                final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
-                        .uri(URI.create(node + ENTITY_HEADER + id))
-                        .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
-                        .build();
                 final CompletableFuture<Integer> response =
-                        pools.get(node).sendAsync(httpRequest, HttpResponse.BodyHandlers.discarding()).
+                        pools.get(node).sendAsync(CreateHttpRequest.creteDelete(node,id), HttpResponse.BodyHandlers.discarding()).
                                 handle((a, exp) -> a.statusCode());
                 futures.add(response);
             }

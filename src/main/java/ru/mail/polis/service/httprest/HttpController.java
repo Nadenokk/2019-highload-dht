@@ -177,9 +177,8 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
-                    deleteDao(key);
-                }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key)
+                        , executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -191,25 +190,24 @@ class HttpController {
         }
 
         final AtomicInteger asks = new AtomicInteger(0);
-        final AtomicInteger asksFalse = new AtomicInteger(0);
         futures.forEach(f -> {
-            if (asks.get() > rf.from - asksFalse.get()) return;
+            if (rf.from < rf.ask + asks.get() ) return;
             try {
-                if (f.get() == 202) {
-                    asks.getAndIncrement();
-                } else {
-                    asksFalse.getAndIncrement();
-                }
+                if (f.get() != 202 ) asks.incrementAndGet();
             } catch (InterruptedException | ExecutionException e) {
-                asksFalse.getAndIncrement();
+                asks.incrementAndGet();
             }
+
         });
-        if (asks.get() >= rf.ask) {
+
+        if (rf.from - asks.get() >= rf.ask) {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
         }
     }
+
+
     private void deleteDao(@NotNull final ByteBuffer key)  {
         try {
             dao.remove(key);

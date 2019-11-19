@@ -174,15 +174,16 @@ class HttpController {
         }
 
         final String[] poolsNodes = topology.poolsNodes(rf.from, key);
-        final Collection<CompletableFuture<Integer>> futures = new ArrayList<>();
+        final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> {
+                final CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> {
                     try {
                         dao.remove(key);
                     } catch (IOException e) {
                         log.info("Error for Remove");
                     }
+                    return null;
                 }, executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {

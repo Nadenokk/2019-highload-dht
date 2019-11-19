@@ -135,7 +135,7 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error UpSet ");
                     }
-                }, executorService).handle((s, t) -> (t != null) ?-1:201);
+                }, executorService).handle((s, t) -> (t == null) ?201:-1);
                 futures.add(future);
             } else {
                 final byte[] bytes = request.getBody();
@@ -166,8 +166,11 @@ class HttpController {
             }
         });
 
-        return  (asks.get() >= rf.ask)?new Response(Response.CREATED, Response.EMPTY):
-                new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
+        if (asks.get() >= rf.ask) {
+            return new Response(Response.CREATED, Response.EMPTY);
+        } else {
+            return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
+        }
     }
 
     Response delete(@NotNull final String id,
@@ -192,7 +195,7 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error for Remove");
                     }
-                }, executorService).handle((s, t) -> (t != null)?-1:202);
+                }, executorService).handle((s, t) -> (t == null)?202:-1);
                 futures.add(future);
             } else {
                 final HttpRequest httpRequest = HttpRequest.newBuilder().DELETE()
@@ -207,20 +210,23 @@ class HttpController {
         }
 
         final AtomicInteger asks = new AtomicInteger(0);
-        final AtomicInteger asksf = new AtomicInteger(0);
+        final AtomicInteger asksFalse = new AtomicInteger(0);
         futures.forEach(f -> {
-            if (asks.get() > rf.from - asksf.get()) return;
+            if (asks.get() > rf.from - asksFalse.get()) return;
             try {
                 if (f.get() == 202) {
                     asks.getAndIncrement();
                 } else {
-                    asksf.getAndIncrement();
+                    asksFalse.getAndIncrement();
                 }
             } catch (InterruptedException | ExecutionException e) {
-                asksf.getAndIncrement();
+                asksFalse.getAndIncrement();
             }
         });
-        return (asks.get() >= rf.ask)?new Response(Response.ACCEPTED, Response.EMPTY):
-                new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
+        if (asks.get() >= rf.ask) {
+            return new Response(Response.ACCEPTED, Response.EMPTY);
+        } else {
+            return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
+        }
     }
 }

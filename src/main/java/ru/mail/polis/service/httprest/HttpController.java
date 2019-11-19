@@ -128,7 +128,7 @@ class HttpController {
                     } catch (IOException e) {
                         log.info("Error UpSet ");
                     }
-                }, executorService).handle((s, t) -> (t == null) ? 201 : -1);
+                }, executorService).handle((s, t) -> expReturn201(t));
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -140,21 +140,16 @@ class HttpController {
         }
 
         final AtomicInteger asks = new AtomicInteger(0);
-        final AtomicInteger asksFalse = new AtomicInteger(0);
         futures.forEach(f -> {
-            if (rf.ask > rf.from - asksFalse.get()) return;
+            if (rf.from < rf.ask + asks.get() ) return;
             try {
-                if (f.get() == 201) {
-                    asks.getAndIncrement();
-                } else {
-                    asksFalse.getAndIncrement();
-                }
+                if (f.get() != 201 ) asks.incrementAndGet();
             } catch (InterruptedException | ExecutionException e) {
-                asksFalse.getAndIncrement();
+                asks.incrementAndGet();
             }
         });
 
-        if (asks.get() >= rf.ask) {
+        if (rf.from - asks.get() >= rf.ask) {
             return new Response(Response.CREATED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
@@ -178,7 +173,7 @@ class HttpController {
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key)).
-                        handle((s, t) -> expReturn(t));
+                        handle((s, t) -> expReturn202(t));
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -206,7 +201,12 @@ class HttpController {
         }
     }
 
-    private Integer expReturn(final Throwable t){
+
+    private Integer expReturn201(final Throwable t){
+        return(t == null)?201:-1;
+    }
+
+    private Integer expReturn202(final Throwable t){
         return(t == null)?202:-1;
     }
 

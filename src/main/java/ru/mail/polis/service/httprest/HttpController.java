@@ -164,11 +164,8 @@ class HttpController {
     Response delete(@NotNull final String id,
                     @NotNull final RF rf,
                     @NotNull final Request request) throws IOException {
-
         final ByteBuffer key = ByteBuffer.wrap(id.getBytes(StandardCharsets.UTF_8));
-        final boolean proxyStatus = request.getHeader(PROXY_HEADER_TRUE) != null;
-
-        if (proxyStatus) {
+        if ((request.getHeader(PROXY_HEADER_TRUE) != null)) {
             dao.remove(key);
             return new Response(Response.ACCEPTED, Response.EMPTY);
         }
@@ -197,7 +194,6 @@ class HttpController {
             } catch (InterruptedException | ExecutionException e) {
                 asks.incrementAndGet();
             }
-
         });
 
         if (rf.from - asks.get() >= rf.ask) {

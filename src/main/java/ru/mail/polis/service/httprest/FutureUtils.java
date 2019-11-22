@@ -62,9 +62,8 @@ final class FutureUtils {
 
         futures.forEach(f -> f.whenComplete((v, exp) -> {
             if (exp != null) {
-                if (errors.incrementAndGet() > askErors) {
+                if (errors.incrementAndGet() > askErors)
                     future.completeExceptionally(new RejectedExecutionException(exp));
-                }
                 return;
             }
             lock.lock();

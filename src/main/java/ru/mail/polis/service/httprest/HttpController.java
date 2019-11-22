@@ -18,18 +18,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
-
 
 class HttpController {
 
@@ -77,25 +73,9 @@ class HttpController {
             }
         }
 
-        final AtomicInteger asks = new AtomicInteger(0);
-        final AtomicInteger asksFalse = new AtomicInteger(0);
-        final List<Value> responses = new ArrayList<>(rf.from);
-        futures.forEach(f -> {
-            if (rf.ask > rf.from - asksFalse.get()) return;
-            try {
-                final Value value = f.get();
-                if (value == null) {
-                    asksFalse.getAndIncrement();
-                } else {
-                    responses.add(value);
-                    asks.getAndIncrement();
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                asksFalse.getAndIncrement();
-            }
-        });
-
-        if (asks.get() >= rf.ask) {
+        final CompletableFuture<List<Value>> future = FutureUtils.scheduleGet(futures, rf.ask, rf.from);
+        final List<Value> responses = FutureUtils.getValues(future);
+        if (responses.size() >= rf.ask) {
             final Value value = responses.stream().filter(Cell -> Cell.getState() != Value.State.ABSENT)
                     .max(Comparator.comparingLong(Value::getTimeStamp)).orElseGet(Value::absent);
             return ResponseTools.createResponse(value, false);
@@ -122,8 +102,8 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> upsetDao(key,byteBuffer),
-                        executorService).handle((s, t) -> expReturn201(t));
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> upsetDao(key, byteBuffer),
+                        executorService).handle((s, t) -> (t != null) ? -1 : 201);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -134,17 +114,8 @@ class HttpController {
             }
         }
 
-        final AtomicInteger ask = new AtomicInteger(0);
-        futures.forEach(u -> {
-            if (rf.from < rf.ask + ask.get() ) return;
-            try {
-                if (u.get() != 201 ) ask.incrementAndGet();
-            } catch (InterruptedException | ExecutionException e) {
-                ask.incrementAndGet();
-            }
-        });
-
-        if (rf.from - ask.get() >= rf.ask) {
+        final CompletableFuture<List<Integer>> future = FutureUtils.schedule(futures, rf.ask, rf.from);
+        if (FutureUtils.asksSum(future, 201) >= rf.ask) {
             return new Response(Response.CREATED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
@@ -167,8 +138,8 @@ class HttpController {
         final Collection<CompletableFuture<Integer>> futures = new ConcurrentLinkedQueue<>();
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
-                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key)).
-                        handle((s, t) -> expReturn202(t));
+                final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key),
+                        executorService).handle((s, t) -> (t != null) ? -1 : 202);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -179,33 +150,15 @@ class HttpController {
             }
         }
 
-        final AtomicInteger ask = new AtomicInteger(0);
-        futures.forEach(d -> {
-            if (rf.ask + ask.get() > rf.from) return;
-            try {
-                if (202 != d.get()) ask.incrementAndGet();
-            } catch (InterruptedException | ExecutionException e) {
-                ask.incrementAndGet();
-            }
-        });
-
-        if (rf.from - ask.get() >= rf.ask) {
+        final CompletableFuture<List<Integer>> future = FutureUtils.schedule(futures, rf.ask, rf.from);
+        if (FutureUtils.asksSum(future, 202) >= rf.ask) {
             return new Response(Response.ACCEPTED, Response.EMPTY);
         } else {
             return new Response(Response.GATEWAY_TIMEOUT, Response.EMPTY);
         }
     }
 
-
-    private Integer expReturn201(final Throwable t){
-        return(t == null)?201:-1;
-    }
-
-    private Integer expReturn202(final Throwable t){
-        return(t == null)?202:-1;
-    }
-
-    private void deleteDao(@NotNull final ByteBuffer key)  {
+    private void deleteDao(@NotNull final ByteBuffer key) {
         try {
             dao.remove(key);
         } catch (IOException e) {
@@ -213,7 +166,7 @@ class HttpController {
         }
     }
 
-    private void upsetDao(@NotNull final ByteBuffer key,final ByteBuffer byteBuffer){
+    private void upsetDao(@NotNull final ByteBuffer key, final ByteBuffer byteBuffer) {
         try {
             dao.upsert(key, byteBuffer);
         } catch (IOException e) {

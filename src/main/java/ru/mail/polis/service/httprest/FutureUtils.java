@@ -25,9 +25,9 @@ final class FutureUtils {
         final Lock lock = new ReentrantLock();
         final List<Integer> result = new ArrayList<>(ask);
         final CompletableFuture<List<Integer>> future = new CompletableFuture<>();
-        AtomicInteger asks = new AtomicInteger(0);
-        AtomicInteger errors = new AtomicInteger(0);
-        int asksEror = from - ask;
+        final AtomicInteger asks = new AtomicInteger(0);
+        final AtomicInteger errors = new AtomicInteger(0);
+        final int asksEror = from - ask;
 
         futures.forEach(f -> f.whenComplete((v, exp) -> {
             if (exp != null) {
@@ -53,12 +53,12 @@ final class FutureUtils {
     static CompletableFuture<List<Value>> scheduleGet(@NotNull final Collection<CompletableFuture<Value>> futures,
                                                       final int ask, final int from) {
 
-        final Lock lock = new ReentrantLock();
-        final List<Value> result = new ArrayList<>(ask);
         final CompletableFuture<List<Value>> future = new CompletableFuture<>();
-        AtomicInteger asks = new AtomicInteger(0);
-        AtomicInteger errors = new AtomicInteger(0);
-        int askErors = from - ask;
+        final AtomicInteger errors = new AtomicInteger(0);
+        final Lock lock = new ReentrantLock();
+        final AtomicInteger asks = new AtomicInteger(0);
+        final List<Value> result = new ArrayList<>(ask);
+        final int askErors = from - ask;
 
         futures.forEach(f -> f.whenComplete((v, exp) -> {
             if (exp != null) {
@@ -84,7 +84,7 @@ final class FutureUtils {
     static int asksSum(final CompletableFuture<List<Integer>> future, final int statusCode) {
         int asks = 0;
         try {
-            for (Integer status : future.get(100,TimeUnit.MILLISECONDS)) {
+            for (final Integer status : future.get(100,TimeUnit.MILLISECONDS)) {
                 if (status == statusCode) asks++;
             }
         } catch (InterruptedException | ExecutionException | TimeoutException e) {

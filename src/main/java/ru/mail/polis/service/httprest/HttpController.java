@@ -103,7 +103,7 @@ class HttpController {
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> upsetDao(key, byteBuffer),
-                        executorService).handle((s, t) -> (t != null) ? -1 : 201);
+                        executorService).handle((s, t) -> (t == null) ? 201: -1);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =
@@ -139,7 +139,7 @@ class HttpController {
         for (final String node : poolsNodes) {
             if (topology.isMe(node)) {
                 final CompletableFuture<Integer> future = CompletableFuture.runAsync(() -> deleteDao(key),
-                        executorService).handle((s, t) -> (t != null) ? -1 : 202);
+                        executorService).handle((s, t) -> (t == null) ? 202 : -1);
                 futures.add(future);
             } else {
                 final CompletableFuture<Integer> response =

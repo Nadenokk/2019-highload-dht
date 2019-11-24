@@ -17,6 +17,7 @@
 !prof-stage4/*
 !prof-stage5/*
 !prof-stage6/*
+!Yatank/*
 
 # ...even if they are in subdirectories
 !*/

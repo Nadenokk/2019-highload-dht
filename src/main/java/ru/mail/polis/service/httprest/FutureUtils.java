@@ -83,7 +83,7 @@ final class FutureUtils {
     static int asksSum(final CompletableFuture<List<Integer>> future, final int statusCode) {
         int asks = 0;
         try {
-            for (final Integer status : future.get(100,TimeUnit.MILLISECONDS)) {
+            for (final Integer status : future.get(1000,TimeUnit.MILLISECONDS)) {
                 if (status == statusCode) asks++;
             }
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -95,7 +95,7 @@ final class FutureUtils {
     static List<Value> getValues(@NotNull final CompletableFuture<List<Value>> future) {
         final List<Value> result = new ArrayList<>();
         try {
-            result.addAll(future.toCompletableFuture().get(100,TimeUnit.MILLISECONDS));
+            result.addAll(future.toCompletableFuture().get(1000,TimeUnit.MILLISECONDS));
         } catch (InterruptedException | ExecutionException | TimeoutException ex) {
             return result;
         }

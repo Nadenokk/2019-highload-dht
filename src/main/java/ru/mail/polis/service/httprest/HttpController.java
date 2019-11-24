@@ -1,5 +1,6 @@
 package ru.mail.polis.service.httprest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import one.nio.http.Request;
 import one.nio.http.Response;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +21,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Comparator;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 
@@ -43,7 +41,8 @@ class HttpController {
         this.dao = dao;
         this.pools = pools;
         this.topology = topology;
-        this.executorService = Executors.newFixedThreadPool(3);
+        this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().
+                availableProcessors() + 2, new ThreadFactoryBuilder().setNameFormat("executorSewrvice").build());
     }
 
     Response get(

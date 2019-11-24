@@ -23,7 +23,7 @@ public final class CreateHttpRequest {
     public static HttpRequest createGet(@NotNull final String node, @NotNull final String id) {
         return HttpRequest.newBuilder().uri(URI.create(node + ENTITY_HEADER + id))
                 .setHeader(PROXY_HEADER, "True")
-                .timeout(Duration.ofMillis(100))
+                .timeout(Duration.ofSeconds(1))
                 .GET().build();
     }
 
@@ -38,7 +38,7 @@ public final class CreateHttpRequest {
                                           final byte[] bytes) {
         return HttpRequest.newBuilder()
                 .uri(URI.create(node + ENTITY_HEADER + id))
-                .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                .setHeader(PROXY_HEADER, "True").timeout(Duration.ofSeconds(1))
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes))
                 .build();
     }
@@ -52,7 +52,7 @@ public final class CreateHttpRequest {
     public static HttpRequest creteDelete(@NotNull final String node, @NotNull final String id) {
         return HttpRequest.newBuilder().DELETE()
                 .uri(URI.create(node + ENTITY_HEADER + id))
-                .setHeader(PROXY_HEADER, "True").timeout(Duration.ofMillis(100))
+                .setHeader(PROXY_HEADER, "True").timeout(Duration.ofSeconds(1))
                 .build();
     }
 }
